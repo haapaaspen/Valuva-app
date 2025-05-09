@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Showreel 2025</title>
+  <style>
+    html, body {
+      background-color: transparent !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    .graphic-container {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .title-container {
+      position: relative;
+      width: 80%;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 0;
+      margin: 0;
+      letter-spacing: -0.02em;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 0 10px rgba(0, 100, 255, 0.5);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    
+    .glitch-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      mix-blend-mode: overlay;
+      opacity: 0.8;
+      background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(255,0,245,0.1) 100%);
+      box-shadow: 0 0 80px rgba(0, 200, 255, 0.2);
+    }
+    
+    .text-fragment {
+      display: inline-block;
+      font-size: 40px;
+      position: relative;
+      vertical-align: middle;
+      letter-spacing: -0.02em;
+      padding: 2px;
+      transform-origin: center;
+    }
+    
+    .showreel {
+      font-size: 120px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #00eaff 0%, #ff00d4 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 15px rgba(0, 225, 255, 0.4);
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+      transform: translateY(-20px) scale(1.05) skew(-2deg);
+    }
+    
+    .year {
+      font-size: 90px;
+      font-weight: 800;
+      transform: translateY(10px) translateX(-10px) rotate(-2deg);
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 
+        3px 3px 0 rgba(0, 234, 255, 0.8),
+        -3px -3px 0 rgba(255, 0, 212, 0.8);
+      filter: drop-shadow(0 0 5px rgba(0, 225, 255, 0.5));
+    }
+    
+    .name {
+      display: block;
+      text-align: right;
+      margin-top: 20px;
+      font-size: 52px;
+      letter-spacing: 0.2em;
+      transform: translateX(15px) skew(2deg);
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 
+        1px 1px 0 rgba(0, 234, 255, 0.6),
+        -1px -1px 0 rgba(255, 0, 212, 0.6);
+    }
+    
+    .glitch-text {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .glitch-text::before, 
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .glitch-text::before {
+      left: 2px;
+      color: rgba(255, 0, 212, 0.7);
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    }
+    
+    .glitch-text::after {
+      left: -2px;
+      color: rgba(0, 234, 255, 0.7);
+      clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    }
+    
+    .noise {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+    
+    p.tagline {
+      font-size: 24px;
+      letter-spacing: 0.5em;
+      margin-top: 50px;
+      font-weight: 200;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      transform: skew(-1deg);
+      text-shadow: 0 0 5px rgba(0, 225, 255, 0.3);
+    }
+    
+    .glitch-slice {
+      position: absolute;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(0, 225, 255, 0.5);
+      z-index: 1;
+    }
+    
+    .slice1 {
+      top: 20%;
+      left: -10%;
+      width: 120%;
+      transform: rotate(-1deg);
+    }
+    
+    .slice2 {
+      top: 40%;
+      left: -5%;
+      width: 110%;
+      transform: rotate(0.5deg);
+    }
+    
+    .slice3 {
+      top: 65%;
+      left: -8%;
+      width: 116%;
+      transform: rotate(-0.8deg);
+    }
+    
+    .glitch-block {
+      position: absolute;
+      background: rgba(0, 225, 255, 0.1);
+      box-shadow: 0 0 15px rgba(0, 225, 255, 0.2);
+      mix-blend-mode: color-dodge;
+      z-index: 0;
+    }
+    
+    .block1 {
+      top: 25%;
+      left: 10%;
+      width: 20%;
+      height: 8%;
+      transform: skew(20deg);
+    }
+    
+    .block2 {
+      top: 50%;
+      right: 5%;
+      width: 15%;
+      height: 10%;
+      transform: skew(-15deg);
+    }
+    
+    .block3 {
+      bottom: 20%;
+      left: 25%;
+      width: 25%;
+      height: 5%;
+      transform: skew(5deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="graphic-container">
+    <div class="noise"></div>
+    <div class="glitch-layer"></div>
+    <div class="glitch-slice slice1"></div>
+    <div class="glitch-slice slice2"></div>
+    <div class="glitch-slice slice3"></div>
+    <div class="glitch-block block1"></div>
+    <div class="glitch-block block2"></div>
+    <div class="glitch-block block3"></div>
+    
+    <div class="title-container">
+      <h1>
+        <span class="text-fragment showreel glitch-text" data-text="SHOWREEL">SHOWREEL</span>
+        <span class="text-fragment year glitch-text" data-text="2025">2025</span>
+        <span class="text-fragment name">VILI HAAPANIEMI</span>
+      </h1>
+      <p class="tagline">Cinematic Vision</p>
+    </div>
+  </div>
+</body>
+</html>

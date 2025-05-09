@@ -1,0 +1,12 @@
+{
+  "name": "valuva-ai-graphics",
+  "version": "1.0.0",
+  "description": "HTML-based graphics generator for DaVinci Resolve",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^19.0.0"
+  }
+} 
