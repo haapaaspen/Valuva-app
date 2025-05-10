@@ -3,90 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DaVinci Resolve Connection Tester</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    header {
-      background-color: #333;
-      color: white;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    .status-container {
-      margin-bottom: 20px;
-      padding: 15px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-    }
-    .connection-status {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 15px;
-      font-weight: bold;
-    }
-    .connected {
-      background-color: #4CAF50;
-      color: white;
-    }
-    .disconnected {
-      background-color: #f44336;
-      color: white;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    #resolveInfo {
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-    }
-  </style>
+  <title>Valuva AI Graphics</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>DaVinci Resolve Connection Tester</h1>
-    </header>
-    
-    <div class="status-container">
-      <h2>Connection Status</h2>
-      <p>Current status: <span id="connectionStatus" class="connection-status disconnected">Checking...</span></p>
-      <button id="checkConnection">Check Connection</button>
+  <header>
+    <div class="logo">Valuva AI Graphics</div>
+    <div id="connection-status" class="status">Connecting to Resolve...</div>
+  </header>
+  
+  <main>
+    <div class="sidebar">
+      <div class="section">
+        <button id="select-file-btn"><i class="fas fa-file-import"></i> Select HTML File</button>
+        <div id="file-info" class="hidden">
+          <div class="section-title"><i class="fas fa-file-code icon"></i> Selected File</div>
+          <div id="file-path"></div>
+        </div>
+      </div>
+      
+      <div id="parameters-section" class="section hidden">
+        <div class="section-title"><i class="fas fa-font icon"></i> Text Elements</div>
+        <div id="text-parameters"></div>
+        
+        <div class="section-title"><i class="fas fa-paint-brush icon"></i> Character</div>
+        <div id="character-parameters" class="parameter-group">
+          <!-- Font family, size, etc. will be dynamically generated -->
+        </div>
+        
+        <div class="section-title"><i class="fas fa-align-left icon"></i> Paragraph</div>
+        <div id="paragraph-parameters" class="parameter-group">
+          <!-- Alignment, spacing, etc. will be dynamically generated -->
+        </div>
+        
+        <div class="section-title"><i class="fas fa-palette icon"></i> Appearance</div>
+        <div id="style-parameters"></div>
+        
+        <div class="section-title"><i class="fas fa-sliders-h icon"></i> Effects</div>
+        <div id="effects-parameters" class="parameter-group">
+          <!-- Effects controls will be dynamically generated -->
+        </div>
+        
+        <div class="action-buttons">
+          <button id="export-btn"><i class="fas fa-file-export"></i> Export to Timeline</button>
+        </div>
+      </div>
     </div>
     
-    <div id="resolveInfo">
-      <p>Waiting for connection to DaVinci Resolve...</p>
+    <div class="content-area">
+      <div class="preview-container">
+        <div class="preview-toolbar">
+          <div><i class="fas fa-eye"></i> Preview</div>
+          <div class="preview-dimension">1920×1080</div>
+        </div>
+        
+        <div class="preview-aspect-container">
+          <div id="no-preview" class="no-preview">
+            <div>
+              <i class="fas fa-file-image fa-3x"></i><br>
+              Select an HTML file to preview
+            </div>
+          </div>
+          
+          <div class="aspect-ratio-box">
+            <iframe id="preview-frame" class="preview-frame hidden" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </main>
   
   <script src="renderer.js"></script>
 </body>

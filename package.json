@@ -1,21 +1,12 @@
 {
   "name": "valuva-ai-graphics",
   "version": "1.0.0",
-  "description": "AI Motion Graphics Design Assistant for DaVinci Resolve",
-  "main": "electron/main.js",
+  "description": "HTML-based graphics generator for DaVinci Resolve",
+  "main": "main.js",
   "scripts": {
-    "start": "electron electron/main.js",
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "debug": "NODE_ENV=development electron electron/main.js"
+    "start": "electron ."
   },
-  "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.4.0",
-    "electron": "^25.0.0",
-    "svelte": "^3.58.0",
-    "typescript": "^4.9.0",
-    "vite": "^4.3.0",
-    "vite-plugin-html": "^3.2.2"
+  "dependencies": {
+    "electron": "^19.0.0"
   }
-}
+} 
