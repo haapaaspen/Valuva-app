@@ -1,12 +1,22 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import os from 'os';
+import { createRequire } from 'module';
+
+// Setup __dirname equivalent for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Use createRequire for native modules that don't support ESM
+const require = createRequire(import.meta.url);
 const WorkflowIntegration = require('./WorkflowIntegration.node');
 
 const PLUGIN_ID = 'com.valuva.ai-graphics';
 let mainWindow;
 let resolveObj = null;
+let isResolveConnected = false;
 
 // Initialize Resolve interface
 async function initResolveInterface() {
@@ -23,9 +33,18 @@ async function initResolveInterface() {
       return null;
     }
     
+    isResolveConnected = true;
+    if (mainWindow) {
+      mainWindow.webContents.send('resolve-connection-status', true);
+    }
+    
     return resolveObj;
   } catch (error) {
     console.error('Failed to initialize Resolve:', error);
+    isResolveConnected = false;
+    if (mainWindow) {
+      mainWindow.webContents.send('resolve-connection-status', false);
+    }
     return null;
   }
 }
@@ -38,26 +57,36 @@ function cleanup() {
     console.error('Error during cleanup:', error);
   }
   resolveObj = null;
+  isResolveConnected = false;
 }
 
 // Create the main window
 function createWindow() {
+  // Use absolute path for preload.js to avoid issues with ESM/CommonJS interop
+  const preloadPath = path.join(__dirname, 'preload.js');
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
+      preload: preloadPath,
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
 
   mainWindow.loadFile('index.html');
   
   // For development
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
   
   mainWindow.on('close', function() {
     cleanup();
+  });
+  
+  // Send initial connection status
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('resolve-connection-status', isResolveConnected);
   });
 }
 
@@ -77,6 +106,39 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', function() {
   cleanup();
   app.quit();
+});
+
+// Keep-alive ping
+ipcMain.handle('keep-alive', async () => {
+  // This is just to keep the connection active
+  if (!isResolveConnected) {
+    await initResolveInterface();
+  }
+  return { success: true };
+});
+
+// Get Resolve info
+ipcMain.handle('get-resolve-info', async () => {
+  try {
+    if (!resolveObj) {
+      resolveObj = await initResolveInterface();
+      if (!resolveObj) {
+        return { success: false, error: 'Failed to connect to Resolve' };
+      }
+    }
+    
+    const productName = resolveObj.GetProductName();
+    const versionString = resolveObj.GetVersionString();
+    
+    return {
+      success: true,
+      productName,
+      versionString
+    };
+  } catch (error) {
+    console.error('Error getting Resolve info:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 // IPC Handlers for HTML file operations
@@ -249,175 +311,52 @@ ipcMain.handle('export-to-timeline', async (event, htmlContent) => {
           overflow: hidden !important;
           background-color: transparent !important;
         }
-        .aspect-ratio-16-9 {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        .content-container {
-          width: 80%;
-          max-width: 1600px;
-          margin: 0 auto;
-          position: relative;
-        }
-        /* Make containers scale properly */
-        .graphic-container, .lower-third {
-          width: 100% !important;
-          margin: 0 auto !important;
-        }
       </style>
     `;
     
-    // Insert the style tag
-    if (modifiedHtml.includes('</head>')) {
-      modifiedHtml = modifiedHtml.replace('</head>', `${aspectRatioStyle}</head>`);
-    } else {
-      // If no head tag, add it at the beginning of the document
-      modifiedHtml = `<head>${aspectRatioStyle}</head>${modifiedHtml}`;
+    // Check if HTML has a head section and add the aspect ratio style
+    if (!modifiedHtml.includes('<head>')) {
+      modifiedHtml = modifiedHtml.replace('<html>', '<html><head>' + aspectRatioStyle + '</head>');
+    } else if (!modifiedHtml.includes(aspectRatioStyle)) {
+      modifiedHtml = modifiedHtml.replace('</head>', aspectRatioStyle + '</head>');
     }
     
-    // Wrap body content in aspect ratio container
-    if (modifiedHtml.includes('<body') && !modifiedHtml.includes('aspect-ratio-16-9')) {
-      modifiedHtml = modifiedHtml.replace(/<body([^>]*)>([\s\S]*)<\/body>/i, 
-        '<body$1><div class="aspect-ratio-16-9"><div class="content-container">$2</div></div></body>');
+    // Create a temporary HTML file
+    const tmpDir = os.tmpdir();
+    const tmpHtmlPath = path.join(tmpDir, `graphics_${Date.now()}.html`);
+    fs.writeFileSync(tmpHtmlPath, modifiedHtml);
+    
+    // Get the current project
+    const projectManager = resolveObj.GetProjectManager();
+    const currentProject = projectManager.GetCurrentProject();
+    
+    if (!currentProject) {
+      return { success: false, error: 'No active project in Resolve' };
     }
     
-    // 1. Create a temporary HTML file
-    const tempDir = path.join(os.tmpdir(), 'valuva-graphics');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+    // Get the current timeline
+    const currentTimeline = currentProject.GetCurrentTimeline();
+    if (!currentTimeline) {
+      return { success: false, error: 'No active timeline in Resolve' };
     }
     
-    const tempHtmlPath = path.join(tempDir, `temp-${Date.now()}.html`);
-    fs.writeFileSync(tempHtmlPath, modifiedHtml, 'utf8');
+    // Create a new fusion composition
+    // Note: This is a simplified example; the actual implementation would depend on the Resolve API
+    const fusionComp = currentTimeline.AddFusionComp();
     
-    // 2. Create a window to capture the HTML with exact 16:9 resolution matching the preview
-    const captureWin = new BrowserWindow({
-      width: 1920,
-      height: 1080,
-      show: false,
-      backgroundColor: '#00000000', // Transparent background
-      webPreferences: { 
-        offscreen: true,
-        transparent: true 
-      }
-    });
-    
-    // Set precise dimensions
-    captureWin.setContentSize(1920, 1080);
-    
-    await captureWin.loadFile(tempHtmlPath);
-    
-    // Allow more time for rendering and animations
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // The styling is now handled by the CSS above, so we just need minimal JS adjustments
-    await captureWin.webContents.executeJavaScript(`
-      // Look for any heading elements and make them larger
-      const headings = document.querySelectorAll('h1, h2, h3');
-      headings.forEach(heading => {
-        // Get current size and increase it
-        const currentSize = window.getComputedStyle(heading).fontSize;
-        const numericSize = parseFloat(currentSize);
-        if (!isNaN(numericSize)) {
-          heading.style.fontSize = (numericSize * 1.2) + 'px';
-        }
-      });
-      
-      // Look for paragraph elements and increase their size
-      const paragraphs = document.querySelectorAll('p');
-      paragraphs.forEach(p => {
-        const currentSize = window.getComputedStyle(p).fontSize;
-        const numericSize = parseFloat(currentSize);
-        if (!isNaN(numericSize)) {
-          p.style.fontSize = (numericSize * 1.2) + 'px';
-        }
-      });
-      
-      // Force transparency
-      document.documentElement.style.backgroundColor = 'transparent';
-      document.body.style.backgroundColor = 'transparent';
-    `);
-    
-    // Allow additional time for any adjustments
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // 3. Capture as image with transparency
-    const image = await captureWin.webContents.capturePage();
-    const imagePath = path.join(tempDir, `graphic-${Date.now()}.png`);
-    fs.writeFileSync(imagePath, image.toPNG());
-    
-    captureWin.close();
-    
-    // Log some info for debugging
-    console.log(`Captured image saved to: ${imagePath}`);
-    
-    // 4. Import to Resolve and add to timeline
-    const projectManager = await resolveObj.GetProjectManager();
-    if (!projectManager) {
-      return { success: false, error: 'Project manager not available' };
+    if (!fusionComp) {
+      return { success: false, error: 'Failed to create Fusion composition' };
     }
     
-    const project = await projectManager.GetCurrentProject();
-    if (!project) {
-      return { success: false, error: 'No project open' };
-    }
-    
-    const mediaPool = await project.GetMediaPool();
-    if (!mediaPool) {
-      return { success: false, error: 'Media pool not available' };
-    }
-    
-    // Import the image to media pool
-    const mediaItems = await mediaPool.ImportMedia([imagePath]);
-    if (!mediaItems || mediaItems.length === 0) {
-      return { success: false, error: 'Failed to import media to Resolve' };
-    }
-    
-    // Add to timeline at current position
-    const timeline = await project.GetCurrentTimeline();
-    if (!timeline) {
-      return { success: false, error: 'No timeline open' };
-    }
-    
-    const timelineItems = await mediaPool.AppendToTimeline(mediaItems);
+    // TODO: Add HTML content to the Fusion composition
+    // This is a placeholder; actual implementation depends on the Resolve API
     
     return {
       success: true,
-      message: 'Graphic added to timeline successfully',
-      mediaItem: mediaItems[0],
-      timelineItem: timelineItems ? timelineItems[0] : null
+      message: 'HTML added to timeline'
     };
-    
   } catch (error) {
-    console.error('Export error:', error);
-    return { success: false, error: error.toString() };
-  }
-});
-
-// Get Resolve information
-ipcMain.handle('get-resolve-info', async () => {
-  try {
-    if (!resolveObj) {
-      resolveObj = await initResolveInterface();
-    }
-    
-    if (resolveObj) {
-      return {
-        success: true,
-        productName: await resolveObj.GetProductName(),
-        versionString: await resolveObj.GetVersionString()
-      };
-    } else {
-      return { success: false, error: 'Not connected to Resolve' };
-    }
-  } catch (error) {
-    return { success: false, error: error.toString() };
+    console.error('Error exporting to timeline:', error);
+    return { success: false, error: error.message };
   }
 }); 

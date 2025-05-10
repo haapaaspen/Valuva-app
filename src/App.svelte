@@ -55,7 +55,7 @@
       <!-- Your app content goes here -->
       {#if connected}
         <div class="card">
-          <h2>Ready to Generate AI Graphics</h2>
+          <h2>Ready to Generate AI Graphicsssssssss</h2>
           <p>Use the tools below to create graphics for your DaVinci Resolve project.</p>
         </div>
       {:else}
