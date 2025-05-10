@@ -2,9 +2,9 @@
 <BlackmagicDesign>
     <Plugin>
         <Id>com.valuva.ai-graphics</Id>
-        <Name>Valuva AI Graphics</Name>
+        <n>Valuva AI Graphics</n>
         <Version>1.0</Version>
-        <Description>HTML-based graphics generator for DaVinci Resolve</Description>
-        <FilePath>main.js</FilePath>
+        <Description>AI Motion Graphics Design Assistant for DaVinci Resolve</Description>
+        <FilePath>electron/main.js</FilePath>
     </Plugin>
 </BlackmagicDesign> 
