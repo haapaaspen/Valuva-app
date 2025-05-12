@@ -5,6 +5,6 @@
         <Name>Valuva AI Graphics</Name>
         <Version>1.0</Version>
         <Description>HTML-based graphics generator for DaVinci Resolve</Description>
-        <FilePath>main.js</FilePath>
+        <FilePath>electron/main.js</FilePath>
     </Plugin>
 </BlackmagicDesign> 

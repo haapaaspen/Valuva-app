@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 // Use createRequire for native modules that don't support ESM
 const require = createRequire(import.meta.url);
-const WorkflowIntegration = require('./WorkflowIntegration.node');
+const WorkflowIntegration = require('../WorkflowIntegration.node');
 
 const PLUGIN_ID = 'com.valuva.ai-graphics';
 let mainWindow;
@@ -75,7 +75,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('../index.html');
   
   // For development
   mainWindow.webContents.openDevTools();
