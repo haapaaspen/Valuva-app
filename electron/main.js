@@ -71,11 +71,15 @@ function createWindow() {
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      webSecurity: false // Temporarily disable for development
     }
   });
 
-  mainWindow.loadFile('build/index.html');
+  // Use a complete absolute file path with the file:// protocol
+  const indexPath = path.resolve(__dirname, '../build/index.html');
+  console.log('Loading Svelte app from:', indexPath);
+  mainWindow.loadURL(`file://${indexPath}`);
   
   // For development
   mainWindow.webContents.openDevTools();

@@ -2,9 +2,22 @@ import tailwindcss from '@tailwindcss/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
+	base: './', // Set relative base path
 	plugins: [tailwindcss(), sveltekit()],
+	server: {
+		fs: {
+			allow: ['..']
+		}
+	},
+	resolve: {
+		alias: {
+			'$lib': path.resolve('./src/lib'),
+			'$components': path.resolve('./src/components')
+		}
+	},
 	test: {
 		workspace: [
 			{
