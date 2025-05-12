@@ -51,3 +51,4 @@ out/
 AppSettings.json
 Settings.json
 Data.json 
+.DS_Store
