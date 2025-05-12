@@ -1,7 +1,8 @@
 {
-	"name": "resolve-plugin",
-	"private": true,
-	"version": "0.0.1",
+	"name": "valuva-ai-graphics",
+	"version": "1.0.0",
+	"description": "HTML-based graphics generator for DaVinci Resolve",
+	"main": "main.js",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

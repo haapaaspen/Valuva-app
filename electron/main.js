@@ -75,7 +75,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('../index.html');
+  mainWindow.loadFile('build/index.html');
   
   // For development
   mainWindow.webContents.openDevTools();
