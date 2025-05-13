@@ -1,6 +1,6 @@
 
 import type { ResolveApiProvider } from './providers/resolveApiProvider';
-import { ToolboxResolveApiProvider } from './providers/toolbox/toolboxResolveApiProvider';
+import { ToolboxResolveApiProvider } from './providers/toolboxResolveApiProvider';
 import { ResolveApiController } from './resolveApiController.svelte';
 
 
