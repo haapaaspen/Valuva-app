@@ -299,52 +299,40 @@ ipcMain.handle('resolve:getRenderPresets', async () => {
 });
 
 
-// --- Electron App Lifecycle ---
-function createWindow() {
+
+function createWindow () {
+  // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1000, // Adjusted for potentially more content
-    height: 800,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'), // Correct path to preload
-      contextIsolation: true, // Highly recommended
-      nodeIntegration: false, // Recommended for security
-      sandbox: true, // Recommended if your renderer doesn't need node APIs directly
-    }
+      width: 900,
+      height: 825,
+      useContentSize: true,
+      webPreferences: {
+          preload: path.join(__dirname, 'preload.js')
+      }
   });
 
-  // In production, load from build output
-  // For dev, you might load from a dev server if using one with SvelteKit
-  const indexPath = path.join(__dirname, '../resolve-plugin/build/index.html'); // Corrected path
-  if (fs.existsSync(indexPath)) { // Check if the build exists
-      mainWindow.loadFile(indexPath);
-  } else {
-      console.warn(`SvelteKit build not found at ${indexPath}. Displaying placeholder or error.`);
-      // Optionally load a placeholder HTML or close with error
-      // mainWindow.loadURL('data:text/html;charset=utf-8,<h1>App build not found</h1>');
-  }
-  
+  // Hide the menu bar (enable below code to hide menu bar)
+  //mainWindow.setMenu(null);
 
-  // mainWindow.webContents.openDevTools(); // Uncomment to open DevTools
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow.on('close', function(e) {
+      cleanupResolve();
+      app.quit();
   });
+
+  // Load index.html on the window.
+  mainWindow.loadFile('../resolve-plugin/build/index.html');
+
+  // Open the DevTools (enable below code to show DevTools)
+  //mainWindow.webContents.openDevTools();
 }
 
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  // Initialize Resolve connection when the app is ready, before creating the window
-  // This way, the API is more likely to be available when the renderer loads.
   await initializeResolve(); 
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-
-   // ---- Add this section for macOS Dock icon ----
-   if (process.platform === 'darwin') { // Check if on macOS
+  
+  if (process.platform === 'darwin') { // Check if on macOS
     const dockIconPath = path.join(__dirname, '../resolve-plugin/static/favicon.png'); // Or 'icon.icns'
     if (fs.existsSync(dockIconPath)) {
         try {
@@ -356,19 +344,24 @@ app.whenReady().then(async () => {
         console.warn(`Dock icon not found at: ${dockIconPath}`);
     }
   }
+  
+  createWindow();
 });
 
-app.on('window-all-closed', () => {
-  cleanupResolve(); // Ensure cleanup happens
+// Quit when all windows are closed.
+app.on('window-all-closed', function () {
+  // On macOS it is common for applications and their menu bar
+  // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
-    app.quit();
+      cleanupResolve();
+      app.quit();
   }
 });
 
-// Optional: Handle 'before-quit' for explicit cleanup
-app.on('before-quit', () => {
-  console.log('App before-quit, ensuring cleanup.');
-  cleanupResolve();
+app.on('activate', function () {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 // Make sure your main.js path for build output is correct
