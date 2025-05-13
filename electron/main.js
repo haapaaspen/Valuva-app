@@ -1,3 +1,23 @@
+/** @type {ResolveEnums} ResolveEnums */
+/** @type {Timeline} Timeline */
+/** @type {TimelineItem} TimelineItem */
+/** @type {MediaPoolItem} MediaPoolItem */
+/** @type {MediaPool} MediaPool */
+/** @type {Folder} Folder */
+/** @type {Project} Project */
+/** @type {Gallery} Gallery */
+/** @type {Resolve} Resolve */
+/** @type {GalleryStill} GalleryStill */
+/** @type {GalleryStillAlbum} GalleryStillAlbum */
+/** @type {FusionComp} FusionComp */
+/** @type {RenderJob} RenderJob */
+/** @type {RenderJobStatus} RenderJobStatus */
+/** @type {RenderFormat} RenderFormat */
+/** @type {RenderCodec} RenderCodec */
+/** @type {RenderSettings} RenderSettings */
+
+// @ts-check // Recommended for better JSDoc type checking
+
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,368 +35,341 @@ const WorkflowIntegration = require('../WorkflowIntegration.node');
 
 const PLUGIN_ID = 'com.valuva.ai-graphics';
 let mainWindow;
-let resolveObj = null;
-let isResolveConnected = false;
 
-// Initialize Resolve interface
-async function initResolveInterface() {
+/**
+ * @type {Resolve | null}
+ */
+let resolveScriptingAPI = null; // Cached Resolve object
+let projectManagerObj = null; // Cached ProjectManager object
+
+// --- Initialization and Cleanup ---
+async function initializeResolve() {
+  if (resolveScriptingAPI) return true;
+
   try {
-    const isSuccess = await WorkflowIntegration.Initialize(PLUGIN_ID);
-    if (!isSuccess) {
-      console.log('Error: Failed to initialize Resolve interface!');
-      return null;
+    console.log('Attempting to initialize WorkflowIntegration...');
+    const initSuccess = await WorkflowIntegration.Initialize(PLUGIN_ID);
+    if (!initSuccess) {
+      console.error('WorkflowIntegration.Initialize reported failure.');
+      return false;
     }
-    
-    resolveObj = await WorkflowIntegration.GetResolve();
-    if (!resolveObj) {
-      console.log('Error: Failed to get Resolve object!');
-      return null;
+
+    console.log('Attempting to get Resolve object...');
+    resolveScriptingAPI = await WorkflowIntegration.GetResolve();
+
+    if (resolveScriptingAPI) {
+      console.log('Successfully connected to Resolve and got scripting API object.');
+      projectManagerObj = resolveScriptingAPI.GetProjectManager(); // Cache ProjectManager
+      if (!projectManagerObj) {
+        console.error('Failed to get ProjectManager object from Resolve.');
+      }
+      if (mainWindow) {
+        mainWindow.webContents.send('resolve-connection-status', true);
+      }
+      return true;
+    } else {
+      console.error('Failed to get Resolve scripting API object from WorkflowIntegration.');
+      return false;
     }
-    
-    isResolveConnected = true;
-    if (mainWindow) {
-      mainWindow.webContents.send('resolve-connection-status', true);
-    }
-    
-    return resolveObj;
   } catch (error) {
-    console.error('Failed to initialize Resolve:', error);
-    isResolveConnected = false;
+    console.error('Error during Resolve initialization:', error);
+    resolveScriptingAPI = null;
+    projectManagerObj = null;
     if (mainWindow) {
       mainWindow.webContents.send('resolve-connection-status', false);
     }
-    return null;
+    return false;
   }
 }
 
-// Cleanup
-function cleanup() {
+function cleanupResolve() {
+  console.log('Cleaning up Resolve interface...');
   try {
-    WorkflowIntegration.CleanUp();
+    if (WorkflowIntegration && typeof WorkflowIntegration.CleanUp === 'function') {
+      WorkflowIntegration.CleanUp();
+    }
   } catch (error) {
-    console.error('Error during cleanup:', error);
+    console.error('Error during WorkflowIntegration.CleanUp:', error);
   }
-  resolveObj = null;
-  isResolveConnected = false;
+  resolveScriptingAPI = null;
+  projectManagerObj = null;
+  if (mainWindow) {
+    mainWindow.webContents.send('resolve-connection-status', false);
+  }
 }
 
-// Create the main window
-function createWindow() {
-  // Use absolute path for preload.js to avoid issues with ESM/CommonJS interop
-  const preloadPath = path.join(__dirname, 'preload.js');
+async function getResolveApi() {
+  if (!resolveScriptingAPI) {
+    const connected = await initializeResolve();
+    if (!connected) {
+      throw new Error('DaVinci Resolve is not connected or scripting API is unavailable.');
+    }
+  }
+  return resolveScriptingAPI;
+}
 
+async function getProjectManager() {
+  if (!projectManagerObj) {
+    await getResolveApi(); // This will initialize resolveScriptingAPI and projectManagerObj
+    if (!projectManagerObj) {
+        throw new Error('Failed to get ProjectManager object.');
+    }
+  }
+  return projectManagerObj;
+}
+
+// --- API Implementations ---
+
+// Map string page names to ResolveEnums.Pages (or string equivalents if enums aren't easily accessible)
+const mapPageNameToEnumValue = (pageNameString) => {
+  // This assumes ResolveEnums.Pages is part of the global scope or accessible.
+  // If your .d.ts defines ResolveEnums in a way that it's globally available, this might work.
+  // Otherwise, you need a more robust mapping.
+  const ResolveEnums = globalThis.ResolveEnums; // Attempt to access if global
+  if (ResolveEnums && ResolveEnums.Pages && ResolveEnums.Pages[pageNameString]) {
+    return ResolveEnums.Pages[pageNameString];
+  }
+  // Fallback or more direct mapping if enums are tricky:
+  const mapping = {
+    "media": "media", "cut": "cut", "edit": "edit",
+    "fusion": "fusion", "color": "color", "fairlight": "fairlight",
+    "deliver": "deliver", "none": "none",
+  };
+  const lowerPageName = pageNameString?.toLowerCase();
+  if (mapping[lowerPageName]) return mapping[lowerPageName];
+  console.warn(`Unknown page name: '${pageNameString}', defaulting to 'edit'.`);
+  return mapping["edit"]; // Default or throw error
+};
+
+ipcMain.handle('resolve:isResolveConnected', async () => {
+  return !!resolveScriptingAPI || await initializeResolve();
+});
+
+ipcMain.handle('resolve:openPage', async (_event, pageName) => {
+  const resolve = await getResolveApi();
+  const enumPageName = mapPageNameToEnumValue(pageName);
+  if (typeof resolve.OpenPage !== 'function') throw new Error("Resolve.OpenPage is not a function");
+  return resolve.OpenPage(enumPageName); // This is synchronous in Resolve API, but ipcMain.handle makes it a Promise
+});
+
+ipcMain.handle('resolve:createProject', async (_event, projectName) => {
+  const pm = await getProjectManager();
+  if (!pm || typeof pm.CreateProject !== 'function') throw new Error("ProjectManager.CreateProject is not a function");
+  const project = pm.CreateProject(projectName);
+  return project ? { success: true, name: project.GetName() } : { success: false }; // Adjust return as needed
+});
+
+ipcMain.handle('resolve:saveProject', async () => {
+  const pm = await getProjectManager();
+  if (!pm || typeof pm.SaveProject !== 'function') throw new Error("ProjectManager.SaveProject is not a function");
+  return pm.SaveProject();
+});
+
+ipcMain.handle('resolve:openProject', async (_event, projectName) => {
+  const pm = await getProjectManager();
+  if (!pm || typeof pm.LoadProject !== 'function') throw new Error("ProjectManager.LoadProject is not a function");
+  const project = pm.LoadProject(projectName);
+  return project ? { success: true, name: project.GetName() } : { success: false };
+});
+
+ipcMain.handle('resolve:createBin', async (_event, binName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  if (!project || typeof project.GetMediaPool !== 'function') throw new Error("Cannot get MediaPool");
+  const mediaPool = project.GetMediaPool();
+  const rootFolder = mediaPool.GetRootFolder();
+  if (!rootFolder || typeof mediaPool.AddSubFolder !== 'function') throw new Error("Cannot add subfolder");
+  const newBin = mediaPool.AddSubFolder(rootFolder, binName);
+  return newBin ? { success: true, name: newBin.GetName() } : { success: false };
+});
+
+ipcMain.handle('resolve:selectBin', async (_event, binName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  const mediaPool = project.GetMediaPool();
+  const rootFolder = mediaPool.GetRootFolder();
+  const subFolders = rootFolder.GetSubFolderList();
+  for (const folder of subFolders) {
+      if (folder.GetName() === binName) {
+          return mediaPool.SetCurrentFolder(folder);
+      }
+  }
+  console.warn(`Bin named '${binName}' not found.`);
+  return false;
+});
+
+ipcMain.handle('resolve:deleteBin', async (_event, binName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  const mediaPool = project.GetMediaPool();
+  const rootFolder = mediaPool.GetRootFolder();
+  const subFolders = rootFolder.GetSubFolderList();
+  for (const folder of subFolders) {
+    if (folder.GetName() === binName) {
+      return mediaPool.DeleteFolders([folder]);
+    }
+  }
+  console.warn(`Bin named '${binName}' for deletion not found.`);
+  return false;
+});
+
+ipcMain.handle('resolve:addClips', async (_event, filePathsArray) => {
+  const resolve = await getResolveApi();
+  if (typeof resolve.GetMediaStorage !== 'function') throw new Error("Resolve.GetMediaStorage is not a function");
+  const mediaStorage = resolve.GetMediaStorage();
+  if (!mediaStorage || typeof mediaStorage.AddItemListToMediaPool !== 'function') {
+    throw new Error("MediaStorage.AddItemListToMediaPool is not available");
+  }
+  const addedItems = mediaStorage.AddItemListToMediaPool(filePathsArray); // This is MediaPoolItem[]
+  return addedItems.map(item => ({ name: item.GetName(), mediaId: item.GetMediaId() })); // Or more detailed info
+});
+
+ipcMain.handle('resolve:createTimeline', async (_event, timelineName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  const mediaPool = project.GetMediaPool();
+  if (!mediaPool || typeof mediaPool.CreateEmptyTimeline !== 'function') throw new Error("MediaPool.CreateEmptyTimeline is not available");
+  const timeline = mediaPool.CreateEmptyTimeline(timelineName);
+  return timeline ? { success: true, name: timeline.GetName() } : { success: false };
+});
+
+ipcMain.handle('resolve:selectTimeline', async (_event, timelineName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  const timelineCount = project.GetTimelineCount();
+  for (let i = 1; i <= timelineCount; i++) {
+      const timeline = project.GetTimelineByIndex(i);
+      if (timeline && timeline.GetName() === timelineName) {
+          return project.SetCurrentTimeline(timeline);
+      }
+  }
+  console.warn(`Timeline named '${timelineName}' not found.`);
+  return false;
+});
+
+ipcMain.handle('resolve:renderTimeline', async (_event, timelineName, renderPresetName, targetDirPath, targetClipName) => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  
+  let timelineToRender = project.GetCurrentTimeline();
+  if (!timelineToRender || timelineToRender.GetName() !== timelineName) {
+    let foundTimeline = null;
+    const timelineCount = project.GetTimelineCount();
+    for (let i = 1; i <= timelineCount; i++) {
+        const tl = project.GetTimelineByIndex(i);
+        if (tl && tl.GetName() === timelineName) {
+            foundTimeline = tl;
+            break;
+        }
+    }
+    if (!foundTimeline) throw new Error(`Timeline '${timelineName}' not found for rendering.`);
+    project.SetCurrentTimeline(foundTimeline); // Set it as current before proceeding
+    timelineToRender = foundTimeline;
+  }
+  // Now timelineToRender is the correct one and is set as current.
+
+  if (typeof project.LoadRenderPreset !== 'function' || 
+      typeof project.SetRenderSettings !== 'function' ||
+      typeof project.AddRenderJob !== 'function' ||
+      typeof project.StartRendering !== 'function') {
+        throw new Error("Required render methods not available on Project object.");
+  }
+
+  if (!project.LoadRenderPreset(renderPresetName)) {
+    throw new Error(`Failed to load render preset: ${renderPresetName}`);
+  }
+  if (!project.SetRenderSettings({ "TargetDir": targetDirPath, "CustomName": targetClipName })) {
+    throw new Error("Failed to set render settings.");
+  }
+  const jobId = project.AddRenderJob();
+  if (!jobId) {
+    throw new Error("Failed to add render job.");
+  }
+  // StartRendering can also take an array of job IDs.
+  // The boolean true makes it interactive mode (shows errors in Resolve UI)
+  const success = project.StartRendering([jobId], true); 
+  return { success, jobId };
+});
+
+ipcMain.handle('resolve:getRenderPresets', async () => {
+  const resolve = await getResolveApi();
+  const project = resolve.GetProjectManager().GetCurrentProject();
+  if (!project || typeof project.GetRenderPresetList !== 'function') throw new Error("Project.GetRenderPresetList is not available");
+  return project.GetRenderPresetList(); // Returns string[]
+});
+
+
+// --- Electron App Lifecycle ---
+function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1000, // Adjusted for potentially more content
     height: 800,
     webPreferences: {
-      preload: preloadPath,
-      contextIsolation: true,
-      nodeIntegration: false
+      preload: path.join(__dirname, 'preload.js'), // Correct path to preload
+      contextIsolation: true, // Highly recommended
+      nodeIntegration: false, // Recommended for security
+      sandbox: true, // Recommended if your renderer doesn't need node APIs directly
     }
   });
 
-  // Use a complete absolute file path with the file:// protocol
-  const indexPath = path.resolve(__dirname, '../build/index.html');
-  console.log('Loading Svelte app from:', indexPath);
-  mainWindow.loadURL(`file://${indexPath}`);
+  // In production, load from build output
+  // For dev, you might load from a dev server if using one with SvelteKit
+  const indexPath = path.join(__dirname, '../build/index.html'); // Adjusted path
+  if (fs.existsSync(indexPath)) { // Check if the build exists
+      mainWindow.loadFile(indexPath);
+  } else {
+      console.warn(`SvelteKit build not found at ${indexPath}. Displaying placeholder or error.`);
+      // Optionally load a placeholder HTML or close with error
+      // mainWindow.loadURL('data:text/html;charset=utf-8,<h1>App build not found</h1>');
+  }
   
-  // For development
-  mainWindow.webContents.openDevTools();
-  
-  mainWindow.on('close', function() {
-    cleanup();
-  });
-  
-  // Send initial connection status
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.send('resolve-connection-status', isResolveConnected);
+
+  // mainWindow.webContents.openDevTools(); // Uncomment to open DevTools
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 }
 
-// Initialize the app
 app.whenReady().then(async () => {
-  // Initialize Resolve connection first
-  await initResolveInterface();
+  // Initialize Resolve connection when the app is ready, before creating the window
+  // This way, the API is more likely to be available when the renderer loads.
+  await initializeResolve(); 
   createWindow();
 
-  // ---- Add this section for macOS Dock icon ----
-  if (process.platform === 'darwin') { // Check if on macOS
-    const dockIconPath = path.join(__dirname, '../build/favicon.png'); // Or 'icon.icns'
-    // It's better to use an .icns file for macOS dock icons for proper sizing.
-    // If you only have a .png, it might work but could look less sharp.
-    try {
-      
-      //app.dock.hide()
-      app.dock.setIcon(dockIconPath);
-      //app.setName('Valuva')
-      //app.dock.show()
-    } catch (error) {
-      console.error('Failed to set Dock icon:', error);
-    }
-  }
-  // ---- End of section ----
-
-  app.on('activate', function() {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
-});
 
-app.on('window-all-closed', function() {
-  cleanup();
-  app.quit();
-});
-
-// Keep-alive ping
-ipcMain.handle('keep-alive', async () => {
-  // This is just to keep the connection active
-  if (!isResolveConnected) {
-    await initResolveInterface();
-  }
-  return { success: true };
-});
-
-// Get Resolve info
-ipcMain.handle('get-resolve-info', async () => {
-  try {
-    if (!resolveObj) {
-      resolveObj = await initResolveInterface();
-      if (!resolveObj) {
-        return { success: false, error: 'Failed to connect to Resolve' };
-      }
-    }
-    
-    const productName = resolveObj.GetProductName();
-    const versionString = resolveObj.GetVersionString();
-    
-    return {
-      success: true,
-      productName,
-      versionString
-    };
-  } catch (error) {
-    console.error('Error getting Resolve info:', error);
-    return { success: false, error: error.message };
-  }
-});
-
-// IPC Handlers for HTML file operations
-ipcMain.handle('select-html-file', async () => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openFile'],
-    filters: [{ name: 'HTML Files', extensions: ['html', 'htm'] }]
-  });
-  
-  if (result.canceled) {
-    return null;
-  }
-  
-  const filePath = result.filePaths[0];
-  try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    return {
-      path: filePath,
-      content: fileContent
-    };
-  } catch (error) {
-    console.error('Error reading file:', error);
-    return { error: error.message };
-  }
-});
-
-// Load a specific HTML file
-ipcMain.handle('load-specific-file', async (event, filePath) => {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return { 
-        error: `File not found: ${filePath}`
-      };
-    }
-    
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    return {
-      path: filePath,
-      content: fileContent
-    };
-  } catch (error) {
-    console.error('Error reading specific file:', error);
-    return { error: error.message };
-  }
-});
-
-ipcMain.handle('extract-parameters', async (event, htmlContent) => {
-  // This is a simplified parameter extraction
-  try {
-    const parameters = {
-      textElements: [],
-      styles: {}
-    };
-    
-    // Extract text elements (simplified example)
-    const textRegex = /<h[1-6][^>]*>(.*?)<\/h[1-6]>|<p[^>]*>(.*?)<\/p>|<span[^>]*>(.*?)<\/span>/gi;
-    let match;
-    
-    while ((match = textRegex.exec(htmlContent)) !== null) {
-      const textContent = match[1] || match[2] || match[3];
-      if (textContent) {
-        parameters.textElements.push({
-          type: match[0].startsWith('<h') ? 'heading' : (match[0].startsWith('<p') ? 'paragraph' : 'span'),
-          content: textContent.trim()
-        });
-      }
-    }
-    
-    // Extract CSS styles (simplified example)
-    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-    const colorRegex = /(color|background-color)\s*:\s*([^;]+)/gi;
-    const fontRegex = /(font-size|font-family|font-weight)\s*:\s*([^;]+)/gi;
-    
-    while ((match = styleRegex.exec(htmlContent)) !== null) {
-      const cssContent = match[1];
-      
-      // Extract colors
-      let colorMatch;
-      while ((colorMatch = colorRegex.exec(cssContent)) !== null) {
-        parameters.styles[colorMatch[1]] = colorMatch[2].trim();
-      }
-      
-      // Extract font properties
-      let fontMatch;
-      while ((fontMatch = fontRegex.exec(cssContent)) !== null) {
-        parameters.styles[fontMatch[1]] = fontMatch[2].trim();
-      }
-    }
-    
-    return parameters;
-  } catch (error) {
-    console.error('Error extracting parameters:', error);
-    return { error: error.message };
-  }
-});
-
-ipcMain.handle('update-html', async (event, { htmlContent, parameters }) => {
-  try {
-    let updatedContent = htmlContent;
-    
-    // Update text elements (simplified)
-    parameters.textElements.forEach(element => {
-      const regex = new RegExp(`(<${element.type}[^>]*>)(.*?)(<\/${element.type}>)`, 'i');
-      updatedContent = updatedContent.replace(regex, `$1${element.content}$3`);
-    });
-    
-    // Update CSS styles (simplified)
-    Object.entries(parameters.styles).forEach(([property, value]) => {
-      const regex = new RegExp(`(${property}\\s*:\\s*)([^;]+)`, 'gi');
-      updatedContent = updatedContent.replace(regex, `$1${value}`);
-    });
-    
-    // Ensure the HTML has a transparent background
-    if (!updatedContent.includes('background-color: transparent')) {
-      // Add or modify html and body styles for transparency
-      if (updatedContent.includes('<style')) {
-        // Modify existing style
-        updatedContent = updatedContent.replace(
-          /<style([^>]*)>([\s\S]*?)<\/style>/gi,
-          (match, attrs, styleContent) => {
-            // Add html and body transparent background styles if they don't exist
-            if (!styleContent.includes('html')) {
-              styleContent += '\nhtml, body { background-color: transparent !important; margin: 0; padding: 0; width: 100%; height: 100%; }';
-            } else if (!styleContent.includes('background-color: transparent')) {
-              styleContent = styleContent.replace(
-                /(html\s*,?\s*body\s*\{[^}]*)(background-color:[^;]*)/gi,
-                '$1background-color: transparent !important'
-              );
-            }
-            return `<style${attrs}>${styleContent}</style>`;
-          }
-        );
-      } else {
-        // Add new style tag
-        updatedContent = updatedContent.replace(
-          '</head>',
-          '<style>html, body { background-color: transparent !important; margin: 0; padding: 0; width: 100%; height: 100%; }</style></head>'
-        );
-      }
-    }
-    
-    return updatedContent;
-  } catch (error) {
-    console.error('Error updating HTML:', error);
-    return { error: error.message };
-  }
-});
-
-// Capture HTML as image and add to timeline
-ipcMain.handle('export-to-timeline', async (event, htmlContent) => {
-  try {
-    if (!resolveObj) {
-      resolveObj = await initResolveInterface();
-      if (!resolveObj) {
-        return { success: false, error: 'Failed to connect to Resolve' };
-      }
-    }
-    
-    // Ensure HTML content has the same aspect ratio styling as the preview
-    let modifiedHtml = htmlContent;
-    
-    // Add aspect ratio styles to ensure consistent display
-    const aspectRatioStyle = `
-      <style>
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          overflow: hidden !important;
-          background-color: transparent !important;
+   // ---- Add this section for macOS Dock icon ----
+   if (process.platform === 'darwin') { // Check if on macOS
+    const dockIconPath = path.join(__dirname, '../resolve-plugin/static/favicon.png'); // Or 'icon.icns'
+    if (fs.existsSync(dockIconPath)) {
+        try {
+            app.dock.setIcon(dockIconPath);
+        } catch (error) {
+            console.error('Failed to set Dock icon:', error);
         }
-      </style>
-    `;
-    
-    // Check if HTML has a head section and add the aspect ratio style
-    if (!modifiedHtml.includes('<head>')) {
-      modifiedHtml = modifiedHtml.replace('<html>', '<html><head>' + aspectRatioStyle + '</head>');
-    } else if (!modifiedHtml.includes(aspectRatioStyle)) {
-      modifiedHtml = modifiedHtml.replace('</head>', aspectRatioStyle + '</head>');
+    } else {
+        console.warn(`Dock icon not found at: ${dockIconPath}`);
     }
-    
-    // Create a temporary HTML file
-    const tmpDir = os.tmpdir();
-    const tmpHtmlPath = path.join(tmpDir, `graphics_${Date.now()}.html`);
-    fs.writeFileSync(tmpHtmlPath, modifiedHtml);
-    
-    // Get the current project
-    const projectManager = resolveObj.GetProjectManager();
-    const currentProject = projectManager.GetCurrentProject();
-    
-    if (!currentProject) {
-      return { success: false, error: 'No active project in Resolve' };
-    }
-    
-    // Get the current timeline
-    const currentTimeline = currentProject.GetCurrentTimeline();
-    if (!currentTimeline) {
-      return { success: false, error: 'No active timeline in Resolve' };
-    }
-    
-    // Create a new fusion composition
-    // Note: This is a simplified example; the actual implementation would depend on the Resolve API
-    const fusionComp = currentTimeline.AddFusionComp();
-    
-    if (!fusionComp) {
-      return { success: false, error: 'Failed to create Fusion composition' };
-    }
-    
-    // TODO: Add HTML content to the Fusion composition
-    // This is a placeholder; actual implementation depends on the Resolve API
-    
-    return {
-      success: true,
-      message: 'HTML added to timeline'
-    };
-  } catch (error) {
-    console.error('Error exporting to timeline:', error);
-    return { success: false, error: error.message };
   }
-}); 
+});
+
+app.on('window-all-closed', () => {
+  cleanupResolve(); // Ensure cleanup happens
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// Optional: Handle 'before-quit' for explicit cleanup
+app.on('before-quit', () => {
+  console.log('App before-quit, ensuring cleanup.');
+  cleanupResolve();
+});
+
+// Make sure your main.js path for build output is correct
+// Check the path in your package.json scripts for building the electron app

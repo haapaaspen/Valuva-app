@@ -1,8 +1,9 @@
 
+
+import { LlmController } from './llmController.svelte';
 import type { LlmProvider } from './providers/llmProvider';
 import { MockLlmProvider } from './providers/mockLlmProvider';
 import { VibeLlmProvider } from './providers/vibeLlmProvider';
-import { LlmController } from './LlmController.svelte';
 
 const activeProvider: LlmProvider = new MockLlmProvider();
 

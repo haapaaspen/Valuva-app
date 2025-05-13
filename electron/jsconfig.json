@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "checkJs": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "./*.js",
+    "./custom.d.ts",
+    "../resolve-plugin/src/lib/resolveBridge/types/*.d.ts", 
+    "../resolve-plugin/src/lib/resolveBridge/types/reference/ResolveAPI.d.ts"  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
