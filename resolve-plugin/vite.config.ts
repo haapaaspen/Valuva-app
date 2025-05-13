@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 
 export default defineConfig({
-	base: './', // Set relative base path
+	base: './',
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		fs: {

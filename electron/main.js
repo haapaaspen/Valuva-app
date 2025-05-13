@@ -64,15 +64,14 @@ function cleanup() {
 function createWindow() {
   // Use absolute path for preload.js to avoid issues with ESM/CommonJS interop
   const preloadPath = path.join(__dirname, 'preload.js');
-  
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
-      nodeIntegration: false,
-      webSecurity: false // Temporarily disable for development
+      nodeIntegration: false
     }
   });
 
@@ -99,6 +98,23 @@ app.whenReady().then(async () => {
   // Initialize Resolve connection first
   await initResolveInterface();
   createWindow();
+
+  // ---- Add this section for macOS Dock icon ----
+  if (process.platform === 'darwin') { // Check if on macOS
+    const dockIconPath = path.join(__dirname, '../build/favicon.png'); // Or 'icon.icns'
+    // It's better to use an .icns file for macOS dock icons for proper sizing.
+    // If you only have a .png, it might work but could look less sharp.
+    try {
+      
+      //app.dock.hide()
+      app.dock.setIcon(dockIconPath);
+      //app.setName('Valuva')
+      //app.dock.show()
+    } catch (error) {
+      console.error('Failed to set Dock icon:', error);
+    }
+  }
+  // ---- End of section ----
 
   app.on('activate', function() {
     if (BrowserWindow.getAllWindows().length === 0) {
