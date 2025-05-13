@@ -314,7 +314,7 @@ function createWindow() {
 
   // In production, load from build output
   // For dev, you might load from a dev server if using one with SvelteKit
-  const indexPath = path.join(__dirname, '../build/index.html'); // Adjusted path
+  const indexPath = path.join(__dirname, '../resolve-plugin/build/index.html'); // Corrected path
   if (fs.existsSync(indexPath)) { // Check if the build exists
       mainWindow.loadFile(indexPath);
   } else {
