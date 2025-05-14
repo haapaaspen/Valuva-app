@@ -4,3 +4,7 @@
 
 // 2. DYNAMIC TOOLS -  based on selection on the viewport:
 // Backend gets parameters from css / tailwind
+
+<script lang="ts">
+
+</script>

@@ -1,0 +1,5 @@
+import{t as l,a as r,c as d}from"../chunks/DPQqTSlI.js";import"../chunks/DkF4epwj.js";import{X as c,j as t,k as o,Y as v}from"../chunks/XJHTZZv_.js";const O=Object.freeze(Object.defineProperty({__proto__:null},Symbol.toStringTag,{value:"Module"}));var m=l('<div class="flex v-screen"></div>');function u(e){var a=m();r(e,a)}function _(e){c();var a=d("// children: viewport, blueprints");r(e,a)}function b(e){c();var a=d(`// 1. BASIC CONTROLS - that are same for all components of a certain type 
+// (e.g. text has always basic text tools)
+
+// 2. DYNAMIC TOOLS -  based on selection on the viewport:
+// Backend gets parameters from css / tailwind`);r(e,a)}var w=l('<div class="flex h-screen"><div class="w-1/4 bg-gray-100 p-4 overflow-y-auto"><!></div> <div class="w-2/4 bg-white"><!></div> <div class="w-1/4 bg-gray-100 p-4 overflow-y-auto"><!></div></div>');function C(e){var a=w(),i=t(a),p=t(i);u(p),o(i);var n=v(i,2),f=t(n);_(f),o(n);var s=v(n,2),g=t(s);b(g),o(s),o(a),r(e,a)}export{C as component,O as universal};
