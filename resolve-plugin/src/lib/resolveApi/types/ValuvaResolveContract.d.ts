@@ -4,7 +4,7 @@
 // script to your SvelteKit application.
 // All methods should return Promises because communication across the context bridge is asynchronous.
 
-export interface ValuvaResolveAPI {
+export interface ValuvaResolveContract {
   isResolveConnected: () => Promise<boolean>;
 
   /**

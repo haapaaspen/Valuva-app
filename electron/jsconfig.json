@@ -8,8 +8,8 @@
   "include": [
     "./*.js",
     "./custom.d.ts",
-    "../resolve-plugin/src/lib/resolveBridge/types/*.d.ts", 
-    "../resolve-plugin/src/lib/resolveBridge/types/reference/ResolveAPI.d.ts"  ],
+    "../resolve-plugin/src/lib/resolveApi/types/*.d.ts", 
+    "../resolve-plugin/src/lib/resolveApi/types/reference/ResolveAPI.d.ts"  ],
   "exclude": [
     "node_modules"
   ]

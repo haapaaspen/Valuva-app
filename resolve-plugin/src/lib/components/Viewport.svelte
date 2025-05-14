@@ -3,3 +3,7 @@
 
 // has some info taken from resolve 
 // (Resolve Timeline: name, 16x9, 25fps)
+
+<script lang="ts">
+    import { resolveApi } from '../resolveApi';
+</script>

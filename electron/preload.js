@@ -25,7 +25,7 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer')
 
 /**
- * @typedef {import('../resolve-plugin/src/lib/resolveBridge/types/ValuvaResolveAPI').ValuvaResolveAPI} ValuvaResolveAPI
+ * @typedef {import('../resolve-plugin/src/lib/resolveApi/types/ValuvaResolveContract').ValuvaResolveContract} ValuvaResolveContract
  */
 
 /**
@@ -35,7 +35,7 @@ const { contextBridge, ipcRenderer } = require('electron/renderer')
  * exposed to the renderer, which is a security best practice.
  *
  * The types should match ValuvaResolveAPI.d.ts
- * @type {ValuvaResolveAPI}
+ * @type {ValuvaResolveContract}
  */
 const resolveAPIHandler = {
   isResolveConnected:         () => ipcRenderer.invoke('resolve:isResolveConnected'),
