@@ -46,44 +46,44 @@
 
 @layer base {
 	:root {
-		--background: 19 28% 90%;             /* --color-ruoste-vaalein */
+		--background: 240 17% 93%;           /* --color-vaaleampi */
 		--foreground: 240 2% 36%;            /* --color-tummanharmaa */
 
-		--muted: 30 53% 75%;                 /* --color-ruoste-vaalea */
-		--muted-foreground: 240 2% 36%;       /* --color-tummanharmaa */
+		--muted: 240 8% 85%;                /* --color-harmaa-vaalea */
+		--muted-foreground: 260 1% 52%;      /* --color-harmaa-tumma */
 
-		--popover: 240 17% 93%;              /* --color-vaaleampi */
+		--popover: 240 6% 88%;               /* --color-vaalea */
 		--popover-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 
-		--card: 240 17% 93%;                  /* --color-vaaleampi */
+		--card: 240 6% 88%;                  /* --color-vaalea */
 		--card-foreground: 240 2% 36%;       /* --color-tummanharmaa */
 
-		--border: 30 53% 75%;                /* --color-ruoste-vaalea */
-		--input: 19 28% 90%;                 /* --color-ruoste-vaalein (match background, border implies) */
+		--border: 252 11% 83%;               /* --color-harmaa */
+		--input: 240 17% 93%;                /* --color-vaaleampi (match background, border implies) */
 
-		--primary: 21 53% 52%;               /* --color-ruoste */
-		--primary-foreground: 240 17% 93%;    /* --color-vaaleampi */
+		--primary: 240 39% 84%;              /* --color-taivas */
+		--primary-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 
-		--secondary: 30 53% 75%;             /* --color-ruoste-vaalea */
+		--secondary: 240 8% 85%;            /* --color-harmaa-vaalea */
 		--secondary-foreground: 240 2% 36%;  /* --color-tummanharmaa */
 
-		--accent: 266 24% 63%;               /* --color-ametysti (as a cooler accent) */
+		--accent: 266 24% 63%;               /* --color-ametysti (stronger accent) */
 		--accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
 
 		--destructive: 21 53% 52%;           /* --color-ruoste */
-		--destructive-foreground: 240 17% 93%;/* --color-vaaleampi */
+		--destructive-foreground: 240 17% 93%; /* --color-vaaleampi */
 
-		--ring: 21 53% 52%;                  /* --color-ruoste */
+		--ring: 240 39% 84%;                 /* --color-taivas */
 		--radius: 0.5rem;
 
-		--sidebar-background: 19 28% 90%;            /* --color-ruoste-vaalein */
+		--sidebar-background: 240 17% 93%;           /* --color-vaaleampi */
 		--sidebar-foreground: 240 2% 36%;           /* --color-tummanharmaa */
-		--sidebar-primary: 21 53% 52%;               /* --color-ruoste */
-		--sidebar-primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
+		--sidebar-primary: 240 39% 84%;              /* --color-taivas */
+		--sidebar-primary-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 		--sidebar-accent: 266 24% 63%;               /* --color-ametysti */
 		--sidebar-accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
-		--sidebar-border: 30 53% 75%;                /* --color-ruoste-vaalea */
-		--sidebar-ring: 21 53% 52%;                  /* --color-ruoste */
+		--sidebar-border: 252 11% 83%;               /* --color-harmaa */
+		--sidebar-ring: 240 39% 84%;                 /* --color-taivas */
 	}
 
 	.dark {
