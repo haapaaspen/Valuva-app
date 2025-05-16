@@ -46,57 +46,44 @@
 
 @layer base {
 	:root {
-		/* Base Page Colors */
-		--background: 240 2% 36%;             /* --color-tummanharmaa */
-		--foreground: 240 17% 93%;           /* --color-vaaleampi */
+		--background: 19 28% 90%;             /* --color-ruoste-vaalein */
+		--foreground: 240 2% 36%;            /* --color-tummanharmaa */
 
-		/* Muted Text & Elements */
-		--muted: 260 1% 52%;                /* --color-harmaa-tumma */
-		--muted-foreground: 240 8% 85%;      /* --color-harmaa-vaalea */
+		--muted: 30 53% 75%;                 /* --color-ruoste-vaalea */
+		--muted-foreground: 240 2% 36%;       /* --color-tummanharmaa */
 
-		/* Popovers (like dropdowns, tooltips) */
-		--popover: 240 6% 88%;               /* --color-vaalea */
+		--popover: 240 17% 93%;              /* --color-vaaleampi */
 		--popover-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 
-		/* Cards */
-		--card: 260 1% 52%;                  /* --color-harmaa-tumma */
-		--card-foreground: 240 17% 93%;      /* --color-vaaleampi */
+		--card: 240 17% 93%;                  /* --color-vaaleampi */
+		--card-foreground: 240 2% 36%;       /* --color-tummanharmaa */
 
-		/* Borders & Inputs */
-		--border: 260 1% 52%;                /* --color-harmaa-tumma */
-		--input: 240 2% 36%;                 /* --color-tummanharmaa (match background, border implies field) */
+		--border: 30 53% 75%;                /* --color-ruoste-vaalea */
+		--input: 19 28% 90%;                 /* --color-ruoste-vaalein (match background, border implies) */
 
-		/* Primary Action Elements (Buttons, Links) */
-		--primary: 266 24% 63%;              /* --color-ametysti */
-		--primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
+		--primary: 21 53% 52%;               /* --color-ruoste */
+		--primary-foreground: 240 17% 93%;    /* --color-vaaleampi */
 
-		/* Secondary Action Elements */
-		--secondary: 260 1% 52%;            /* --color-harmaa-tumma */
-		--secondary-foreground: 240 17% 93%; /* --color-vaaleampi */
+		--secondary: 30 53% 75%;             /* --color-ruoste-vaalea */
+		--secondary-foreground: 240 2% 36%;  /* --color-tummanharmaa */
 
-		/* Accent (often for hovers or less prominent highlights) */
-		--accent: 30 53% 75%;                /* --color-ruoste-vaalea (as a warmer accent) */
-		--accent-foreground: 240 2% 36%;     /* --color-tummanharmaa */
+		--accent: 266 24% 63%;               /* --color-ametysti (as a cooler accent) */
+		--accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
 
-		/* Destructive Actions (Delete, Error) */
 		--destructive: 21 53% 52%;           /* --color-ruoste */
-		--destructive-foreground: 240 17% 93%; /* --color-vaaleampi */
+		--destructive-foreground: 240 17% 93%;/* --color-vaaleampi */
 
-		/* Focus Rings */
-		--ring: 266 24% 63%;                 /* --color-ametysti */
-
-		/* Border Radius (unchanged from template) */
+		--ring: 21 53% 52%;                  /* --color-ruoste */
 		--radius: 0.5rem;
 
-		/* Sidebar Specific Theme */
-		--sidebar-background: 240 2% 36%;            /* --color-tummanharmaa */
-		--sidebar-foreground: 240 17% 93%;          /* --color-vaaleampi */
-		--sidebar-primary: 266 24% 63%;              /* --color-ametysti */
+		--sidebar-background: 19 28% 90%;            /* --color-ruoste-vaalein */
+		--sidebar-foreground: 240 2% 36%;           /* --color-tummanharmaa */
+		--sidebar-primary: 21 53% 52%;               /* --color-ruoste */
 		--sidebar-primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
-		--sidebar-accent: 30 53% 75%;                /* --color-ruoste-vaalea */
-		--sidebar-accent-foreground: 240 2% 36%;     /* --color-tummanharmaa */
-		--sidebar-border: 260 1% 52%;                /* --color-harmaa-tumma */
-		--sidebar-ring: 266 24% 63%;                 /* --color-ametysti */
+		--sidebar-accent: 266 24% 63%;               /* --color-ametysti */
+		--sidebar-accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
+		--sidebar-border: 30 53% 75%;                /* --color-ruoste-vaalea */
+		--sidebar-ring: 21 53% 52%;                  /* --color-ruoste */
 	}
 
 	.dark {
