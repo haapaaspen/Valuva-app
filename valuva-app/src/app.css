@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sen:wght@400..800&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@theme {
+    --color-blue: oklch(0.77 0.1173 260.05);
+    --color-eggplant-darkest: oklch(0.23 0.0179 338.75);
+    --color-eggplant-dark: oklch(0.28 0.0057 337.67);
+    --color-eggplant-darkish: oklch(0.35 0.0101 319.45);
+
+    --color-harmaa-tumma: #858486;
+    --color-harmaa: #D2D1D8;
+    --color-harmaa-vaalea: #D9D9DD;
+    --color-vaalea: #e0e0e2;
+    --color-vaaleampi: #ececf0;
+    --color-ametysti: #9c8bb6;
+    --color-ruoste: #c27a4a;
+    --color-taivas: #CACAE3;
+    --color-ruoste-vaalea: #E1BA9C;
+    --color-ruoste-vaalein: #EDE3DD;
+    --color-tummanharmaa: #5a5a5c;
+
+    --font-sans: "Sen", sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: "Space Mono", monospace;
+
+	--color-harmaa-tumma: #858486 → 260 1% 52%
+	--color-harmaa: #D2D1D8 → 252 11% 83%
+	--color-harmaa-vaalea: #D9D9DD → 240 8% 85%
+	--color-vaalea: #e0e0e2 → 240 6% 88%
+	--color-vaaleampi: #ececf0 → 240 17% 93%
+	--color-ametysti: #9c8bb6 → 266 24% 63%
+	--color-ruoste: #c27a4a → 21 53% 52%
+	--color-taivas: #CACAE3 → 240 39% 84%
+	--color-ruoste-vaalea: #E1BA9C → 30 53% 75%
+	--color-ruoste-vaalein: #EDE3DD → 19 28% 90%
+	--color-tummanharmaa: #5a5a5c → 240 2% 36%
+  
+  }
+
+
+@layer base {
+	:root {
+		--background: 252 11% 83%;
+		--foreground: 240 10% 3.9%;
+
+		--muted: 240 4.8% 95.9%;
+		--muted-foreground: 240 3.8% 46.1%;
+
+		--popover: 0 0% 100%;
+		--popover-foreground: 240 10% 3.9%;
+
+		--card: 0 0% 100%;
+		--card-foreground: 240 10% 3.9%;
+
+		--border: 240 5.9% 90%;
+		--input: 240 5.9% 90%;
+
+		--primary: 240 5.9% 10%;
+		--primary-foreground: 0 0% 98%;
+
+		--secondary: 240 4.8% 95.9%;
+		--secondary-foreground: 240 5.9% 10%;
+
+		--accent: 240 4.8% 95.9%;
+		--accent-foreground: 240 5.9% 10%;
+
+		--destructive: 0 84.2% 60.2%;
+		--destructive-foreground: 0 0% 98%;
+
+		--ring: 240 10% 3.9%;
+
+		--radius: 0.5rem;
+
+		--sidebar-background: 0 0% 98%;
+		--sidebar-foreground: 240 5.3% 26.1%;
+		--sidebar-primary: 240 5.9% 10%;
+		--sidebar-primary-foreground: 0 0% 98%;
+		--sidebar-accent: 240 4.8% 95.9%;
+		--sidebar-accent-foreground: 240 5.9% 10%;
+		--sidebar-border: 220 13% 91%;
+		--sidebar-ring: 217.2 91.2% 59.8%;
+		
+	}
+
+	.dark {
+		--background: 240 10% 3.9%;
+		--foreground: 0 0% 98%;
+
+		--muted: 240 3.7% 15.9%;
+		--muted-foreground: 240 5% 64.9%;
+
+		--popover: 240 10% 3.9%;
+		--popover-foreground: 0 0% 98%;
+
+		--card: 240 10% 3.9%;
+		--card-foreground: 0 0% 98%;
+
+		--border: 240 3.7% 15.9%;
+		--input: 240 3.7% 15.9%;
+
+		--primary: 0 0% 98%;
+		--primary-foreground: 240 5.9% 10%;
+
+		--secondary: 240 3.7% 15.9%;
+		--secondary-foreground: 0 0% 98%;
+
+		--accent: 240 3.7% 15.9%;
+		--accent-foreground: 0 0% 98%;
+
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 0% 98%;
+
+		--ring: 240 4.9% 83.9%;
+
+		--sidebar-background: 240 5.9% 10%;
+		--sidebar-foreground: 240 4.8% 95.9%;
+		--sidebar-primary: 224.3 76.3% 48%;
+		--sidebar-primary-foreground: 0 0% 100%;
+		--sidebar-accent: 240 3.7% 15.9%;
+		--sidebar-accent-foreground: 240 4.8% 95.9%;
+		--sidebar-border: 240 3.7% 15.9%;
+		--sidebar-ring: 217.2 91.2% 59.8%;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+
+	@font-face {
+		font-family: 'geist';
+		font-style: normal;
+		font-weight: 100 900;
+		src: url(/fonts/geist.woff2) format('woff2');
+	}
+
+	@font-face {
+		font-family: 'geist-mono';
+		font-style: normal;
+		font-weight: 100 900;
+		src: url(/fonts/geist-mono.woff2) format('woff2');
+	}
+}

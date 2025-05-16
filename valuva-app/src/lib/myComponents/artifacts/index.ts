@@ -1,0 +1,1 @@
+export type ArtifactType = 'text' | 'valuvaGraphic' | 'font' | 'effect' | 'colorScheme' | 'svg';

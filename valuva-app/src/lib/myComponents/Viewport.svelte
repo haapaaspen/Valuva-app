@@ -6,10 +6,6 @@
 
 // has some info taken from resolve 
 // (Resolve Timeline: name, 16x9, 25fps)
-    import { resolveApi } from '../resolveApi';
-    import { AspectRatio } from "bits-ui";
+    import { resolveApi } from '../../../../resolveApi';
 
 </script>
-
-<AspectRatio.Root ratio={16 / 9} class=" bg-black">
-</AspectRatio.Root>
