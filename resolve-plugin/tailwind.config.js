@@ -14,10 +14,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        'blue': 'oklch(0.77 0.1173 260.05)',
-        'eggplant-darkest': 'oklch(0.23 0.0179 338.75)',
-        'eggplant-dark': 'oklch(0.28 0.0057 337.67)',
-        'eggplant-darkish': 'oklch(0.35 0.0101 319.45)',
       },
     },
   },

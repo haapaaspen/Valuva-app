@@ -1,14 +1,15 @@
 <script lang="ts">
-	import '../app.css';
+	import '../../app.css';
     import AiChatPanel from "$lib/components/AiChatPanel.svelte";
     import Canvas from "$lib/components/Canvas.svelte";
     import EditPanel from "$lib/components/EditPanel.svelte";
 
 	import { resolveApi } from '$lib/resolveApi';
     import { onMount } from 'svelte';
+    import Viewport from '$lib/components/Viewport.svelte';
 
 	let isConnected = $state(true);
-/* 	onMount(async () => {
+ 	onMount(async () => {
 		isConnected = await resolveApi.isResolveConnected();
 		
 		setInterval(async () => {
@@ -26,30 +27,20 @@
 			}
 		}, 5000);
 	});
-*/
+
 </script>
 
-{#if isConnected}
-	<div class="flex h-screen">
-		<!-- Left -->
-		<div class="w-1/4 bg-eggplant-dark p-4 overflow-y-auto">
-			<AiChatPanel />
-		</div>
 
-		<!-- Center -->
-		<div class="w-2/4 bg-eggplant-darkest">
-			<Canvas />
-		</div>
+<div class="flex h-screen bg-vaalea">
+	<!-- Left -->
+	<AiChatPanel />
 
-		<!-- Right -->
-		<div class="w-1/4 bg-eggplant-dark p-4 overflow-y-auto">
-			<EditPanel />
-		</div>
+	<!-- Center -->
+	<div class="flex flex-col flex-1">
+		<Viewport />
+		<Canvas />
 	</div>
-{:else}
-	<div class="flex h-screen">
-		<div class="flex bg-black p-4 overflow-y-auto">
-			<p class="blue">Not connected to Resolve</p>
-		</div>
-	</div>
-{/if}
+
+	<!-- Right -->
+	<EditPanel />
+</div>

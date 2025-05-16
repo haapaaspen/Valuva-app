@@ -14,5 +14,9 @@
 		"check:plugin": "npm run check --workspace=resolve-plugin",
 		"test:plugin": "npm run test --workspace=resolve-plugin",
 		"start:electron": "npm start --workspace=electron"
+	},
+	"dependencies": {
+		"pixi.js": "^8.9.2",
+		"svelte-pixi": "^7.0.0"
 	}
 }
