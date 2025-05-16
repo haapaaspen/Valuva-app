@@ -13,7 +13,9 @@
 
 <div class="flex h-screen bg-vaalea">
 	<!-- Left -->
-	<Chat chat={undefined} initialMessages={[]} readonly={false} user={data.user} />
+	 <div class="w-1/4">
+		<Chat chat={undefined} initialMessages={[]} readonly={false} user={data.user} />
+	</div>
 
 	<!-- Center -->
 	<div class="flex flex-col flex-1">

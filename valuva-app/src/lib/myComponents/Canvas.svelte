@@ -5,7 +5,7 @@
     // children: viewport, blueprints
 </script>
 
-<div class="flex flex-col  h-full">
+<div class="flex flex-col bg-background h-full">
     <div class="fixed bottom-0 w-2/4 flex justify-center pb-4">
         <Toolbar />
     </div>

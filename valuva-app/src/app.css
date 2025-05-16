@@ -49,41 +49,41 @@
 		--background: 240 17% 93%;           /* --color-vaaleampi */
 		--foreground: 240 2% 36%;            /* --color-tummanharmaa */
 
-		--muted: 240 8% 85%;                /* --color-harmaa-vaalea */
-		--muted-foreground: 260 1% 52%;      /* --color-harmaa-tumma */
+		--muted: 240 39% 84%;                /* --color-taivas */
+		--muted-foreground: 240 2% 36%;      /* --color-tummanharmaa */
 
 		--popover: 240 6% 88%;               /* --color-vaalea */
 		--popover-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 
-		--card: 240 6% 88%;                  /* --color-vaalea */
+		--card: 240 39% 84%;                  /* --color-taivas */
 		--card-foreground: 240 2% 36%;       /* --color-tummanharmaa */
 
 		--border: 252 11% 83%;               /* --color-harmaa */
-		--input: 240 17% 93%;                /* --color-vaaleampi (match background, border implies) */
+		--input: 19 28% 90%;                 /* --color-ruoste-vaalein */
 
-		--primary: 240 39% 84%;              /* --color-taivas */
-		--primary-foreground: 240 2% 36%;    /* --color-tummanharmaa */
+		--primary: 30 53% 75%;            /* --color-ruoste-vaalea */
+		--primary-foreground: 240 2% 36%;  /* --color-tummanharmaa */
 
-		--secondary: 240 8% 85%;            /* --color-harmaa-vaalea */
+		--secondary: 30 53% 75%;            /* --color-ruoste-vaalea */
 		--secondary-foreground: 240 2% 36%;  /* --color-tummanharmaa */
 
-		--accent: 266 24% 63%;               /* --color-ametysti (stronger accent) */
+		--accent: 266 24% 63%;               /* --color-ametysti */
 		--accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
 
-		--destructive: 21 53% 52%;           /* --color-ruoste */
+		--destructive: 21 53% 52%;           /* --color-ruoste (can be same as primary if distinct enough) */
 		--destructive-foreground: 240 17% 93%; /* --color-vaaleampi */
 
-		--ring: 240 39% 84%;                 /* --color-taivas */
+		--ring: 21 53% 52%;                  /* --color-ruoste */
 		--radius: 0.5rem;
 
-		--sidebar-background: 240 17% 93%;           /* --color-vaaleampi */
+		--sidebar-background: 240 39% 84%;           /* --color-taivas */
 		--sidebar-foreground: 240 2% 36%;           /* --color-tummanharmaa */
-		--sidebar-primary: 240 39% 84%;              /* --color-taivas */
-		--sidebar-primary-foreground: 240 2% 36%;    /* --color-tummanharmaa */
+		--sidebar-primary: 21 53% 52%;               /* --color-ruoste */
+		--sidebar-primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
 		--sidebar-accent: 266 24% 63%;               /* --color-ametysti */
 		--sidebar-accent-foreground: 240 17% 93%;    /* --color-vaaleampi */
 		--sidebar-border: 252 11% 83%;               /* --color-harmaa */
-		--sidebar-ring: 240 39% 84%;                 /* --color-taivas */
+		--sidebar-ring: 21 53% 52%;                  /* --color-ruoste */
 	}
 
 	.dark {
