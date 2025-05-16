@@ -46,46 +46,57 @@
 
 @layer base {
 	:root {
-		--background: 252 11% 83%;
-		--foreground: 240 10% 3.9%;
+		/* Base Page Colors */
+		--background: 240 2% 36%;             /* --color-tummanharmaa */
+		--foreground: 240 17% 93%;           /* --color-vaaleampi */
 
-		--muted: 240 4.8% 95.9%;
-		--muted-foreground: 240 3.8% 46.1%;
+		/* Muted Text & Elements */
+		--muted: 260 1% 52%;                /* --color-harmaa-tumma */
+		--muted-foreground: 240 8% 85%;      /* --color-harmaa-vaalea */
 
-		--popover: 0 0% 100%;
-		--popover-foreground: 240 10% 3.9%;
+		/* Popovers (like dropdowns, tooltips) */
+		--popover: 240 6% 88%;               /* --color-vaalea */
+		--popover-foreground: 240 2% 36%;    /* --color-tummanharmaa */
 
-		--card: 0 0% 100%;
-		--card-foreground: 240 10% 3.9%;
+		/* Cards */
+		--card: 260 1% 52%;                  /* --color-harmaa-tumma */
+		--card-foreground: 240 17% 93%;      /* --color-vaaleampi */
 
-		--border: 240 5.9% 90%;
-		--input: 240 5.9% 90%;
+		/* Borders & Inputs */
+		--border: 260 1% 52%;                /* --color-harmaa-tumma */
+		--input: 240 2% 36%;                 /* --color-tummanharmaa (match background, border implies field) */
 
-		--primary: 240 5.9% 10%;
-		--primary-foreground: 0 0% 98%;
+		/* Primary Action Elements (Buttons, Links) */
+		--primary: 266 24% 63%;              /* --color-ametysti */
+		--primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
 
-		--secondary: 240 4.8% 95.9%;
-		--secondary-foreground: 240 5.9% 10%;
+		/* Secondary Action Elements */
+		--secondary: 260 1% 52%;            /* --color-harmaa-tumma */
+		--secondary-foreground: 240 17% 93%; /* --color-vaaleampi */
 
-		--accent: 240 4.8% 95.9%;
-		--accent-foreground: 240 5.9% 10%;
+		/* Accent (often for hovers or less prominent highlights) */
+		--accent: 30 53% 75%;                /* --color-ruoste-vaalea (as a warmer accent) */
+		--accent-foreground: 240 2% 36%;     /* --color-tummanharmaa */
 
-		--destructive: 0 84.2% 60.2%;
-		--destructive-foreground: 0 0% 98%;
+		/* Destructive Actions (Delete, Error) */
+		--destructive: 21 53% 52%;           /* --color-ruoste */
+		--destructive-foreground: 240 17% 93%; /* --color-vaaleampi */
 
-		--ring: 240 10% 3.9%;
+		/* Focus Rings */
+		--ring: 266 24% 63%;                 /* --color-ametysti */
 
+		/* Border Radius (unchanged from template) */
 		--radius: 0.5rem;
 
-		--sidebar-background: 0 0% 98%;
-		--sidebar-foreground: 240 5.3% 26.1%;
-		--sidebar-primary: 240 5.9% 10%;
-		--sidebar-primary-foreground: 0 0% 98%;
-		--sidebar-accent: 240 4.8% 95.9%;
-		--sidebar-accent-foreground: 240 5.9% 10%;
-		--sidebar-border: 220 13% 91%;
-		--sidebar-ring: 217.2 91.2% 59.8%;
-		
+		/* Sidebar Specific Theme */
+		--sidebar-background: 240 2% 36%;            /* --color-tummanharmaa */
+		--sidebar-foreground: 240 17% 93%;          /* --color-vaaleampi */
+		--sidebar-primary: 266 24% 63%;              /* --color-ametysti */
+		--sidebar-primary-foreground: 240 17% 93%;   /* --color-vaaleampi */
+		--sidebar-accent: 30 53% 75%;                /* --color-ruoste-vaalea */
+		--sidebar-accent-foreground: 240 2% 36%;     /* --color-tummanharmaa */
+		--sidebar-border: 260 1% 52%;                /* --color-harmaa-tumma */
+		--sidebar-ring: 266 24% 63%;                 /* --color-ametysti */
 	}
 
 	.dark {
