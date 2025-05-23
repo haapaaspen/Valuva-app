@@ -8,12 +8,26 @@
 	import { Markdown } from '../markdown';
 	import MessageReasoning from '../message-reasoning.svelte';
 	import { fly } from 'svelte/transition';
+	import { onMount } from 'svelte';
 	import type { UIMessage } from '@ai-sdk/svelte';
 
 	let { message, readonly, loading }: { message: UIMessage; readonly: boolean; loading: boolean } =
 		$props();
 
 	let mode = $state<'view' | 'edit'>('view');
+	
+	// Auto-load graphics when they're generated
+	function loadGraphicsToCanvas(data: any) {
+		if (typeof window !== 'undefined') {
+			window.dispatchEvent(new CustomEvent('graphicsGenerated', {
+				detail: {
+					code: data.code,
+					duration: data.duration,
+					title: data.title
+				}
+			}));
+		}
+	}
 </script>
 
 <div
@@ -92,8 +106,7 @@
 						</div>
 					{/if}
 
-					<!-- TODO -->
-					<!-- {:else if type === 'tool-invocation'}
+					{:else if type === 'tool-invocation'}
 					{@const { toolInvocation } = part}
 					{@const { toolName, state } = toolInvocation}
 
@@ -101,35 +114,52 @@
 						{@const { args } = toolInvocation}
 						<div
 							class={cn({
-								skeleton: ['getWeather'].includes(toolName)
+								skeleton: ['generateCanvasGraphics'].includes(toolName)
 							})}
 						>
-							{#if toolName === 'getWeather'}
-								<Weather />
-							{:else if toolName === 'createDocument'}
-								<DocumentPreview {readonly} {args} />
-							{:else if toolName === 'updateDocument'}
-								<DocumentToolCall type="update" {args} {readonly} />
-							{:else if toolName === 'requestSuggestions'}
-								<DocumentToolCall type="request-suggestions" {args} {readonly} />
+							{#if toolName === 'generateCanvasGraphics'}
+								<div class="rounded-lg border bg-muted/50 p-4">
+									<div class="flex items-center gap-2 text-sm text-muted-foreground">
+										<div class="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
+										Generating canvas graphics: {args.title}
+									</div>
+								</div>
 							{/if}
 						</div>
 					{:else if state === 'result'}
 					{@const { result } = toolInvocation}
 						<div>
-							{#if toolName === 'getWeather'}
-								<Weather weatherAtLocation={result} />
-							{:else if toolName === 'createDocument'}
-								<DocumentPreview {readonly} {result} />
-							{:else if toolName === 'updateDocument'}
-								<DocumentToolResult type="update" {result} {readonly} />
-							{:else if toolName === 'requestSuggestions'}
-								<DocumentToolResult type="request-suggestions" {result} {readonly} />
+							{#if toolName === 'generateCanvasGraphics'}
+								<div class="rounded-lg border bg-green-50 p-4">
+									<div class="flex items-center gap-2 text-sm font-medium text-green-700 mb-2">
+										<div class="h-2 w-2 rounded-full bg-green-500"></div>
+										Graphics Generated: {result.data.title}
+									</div>
+									<div class="text-xs text-green-600">
+										Duration: {result.data.duration}s • Generated at {new Date(result.data.timestamp).toLocaleTimeString()}
+									</div>
+									<div class="mt-2 flex gap-2">
+										<button 
+											class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+											onclick={() => {
+												loadGraphicsToCanvas(result.data);
+											}}
+										>
+											Load to Canvas
+										</button>
+										<span class="text-xs text-green-600 flex items-center">
+											✓ Auto-loaded to canvas
+										</span>
+									</div>
+								</div>
+								{#key result.data.timestamp}
+									{setTimeout(() => loadGraphicsToCanvas(result.data), 100), ''}
+								{/key}
 							{:else}
 								<pre>{JSON.stringify(result, null, 2)}</pre>
 							{/if}
 						</div>
-					{/if} -->
+					{/if}
 				{/if}
 			{/each}
 

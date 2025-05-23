@@ -7,6 +7,7 @@
 		onPause?: () => void;
 		onSeek?: (time: number) => void;
 		onExport?: () => void;
+		onExportCode?: () => void;
 		isExporting?: boolean;
 		exportProgress?: number;
 	}
@@ -19,6 +20,7 @@
 		onPause, 
 		onSeek, 
 		onExport, 
+		onExportCode,
 		isExporting = false, 
 		exportProgress = 0 
 	}: TimelineProps = $props();
@@ -208,6 +210,15 @@
 					{:else}
 						📦 Export ZIP
 					{/if}
+				</button>
+				
+				<!-- Code Export Button -->
+				<button 
+					class="ml-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+					onclick={() => onExportCode?.()}
+					title="Export JavaScript Code"
+				>
+					💾 Export Code
 				</button>
 			</div>
 		</div>

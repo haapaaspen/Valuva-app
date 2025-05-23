@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { createCanvasUtils } from '$lib/canvas-utils';
 
 	interface CanvasProps {
 		drawingCode?: string;
@@ -24,10 +25,16 @@
 	let canvasScale = 1;
 	let displayWidth = $state(800);
 	let displayHeight = $state(450); // 16:9 ratio
+	
+	// Canvas utils will be created after context is available
+	let canvasUtils: any = null;
 
 	onMount(() => {
 		console.log('Canvas component mounted');
 		ctx = canvas.getContext('2d')!;
+		
+		// Create canvas utils with the full functionality including fonts
+		canvasUtils = createCanvasUtils(ctx, canvas);
 		
 		// Set up high-quality rendering
 		ctx.imageSmoothingEnabled = true;
@@ -68,8 +75,8 @@
 		ctx.clearRect(0, 0, width, height);
 	}
 
-	// Utility functions that the LLM can use
-	const canvasUtils = {
+	// Legacy utils for backward compatibility (will be replaced with full utils)
+	const legacyCanvasUtils = {
 		// Color palette
 		colors: {
 			background: 'hsl(240, 17%, 93%)',
@@ -83,8 +90,11 @@
 		
 		// Particle system
 		createParticles: (count: number) => {
+			// Validate particle count
+			const validCount = Math.max(1, Math.min(Math.floor(count) || 50, 1000));
 			const particles: any[] = [];
-			for (let i = 0; i < count; i++) {
+			
+			for (let i = 0; i < validCount; i++) {
 				particles.push({
 					x: Math.random() * width,
 					y: Math.random() * height,
@@ -94,6 +104,10 @@
 					opacity: Math.random() * 0.5 + 0.2,
 					hue: Math.random() * 60 + 240,
 					update() {
+						// Ensure speed values are valid
+						this.speedX = isFinite(this.speedX) ? this.speedX : 0;
+						this.speedY = isFinite(this.speedY) ? this.speedY : 0;
+						
 						this.x += this.speedX;
 						this.y += this.speedY;
 						if (this.x < 0) this.x = width;
@@ -102,11 +116,14 @@
 						if (this.y > height) this.y = 0;
 					},
 					draw(ctx: CanvasRenderingContext2D) {
+						// Validate drawing parameters
+						if (!isFinite(this.x) || !isFinite(this.y) || !isFinite(this.size)) return;
+						
 						ctx.save();
-						ctx.globalAlpha = this.opacity;
-						ctx.fillStyle = `hsl(${this.hue}, 24%, 63%)`;
+						ctx.globalAlpha = Math.max(0, Math.min(1, this.opacity || 0.5));
+						ctx.fillStyle = `hsl(${this.hue || 240}, 24%, 63%)`;
 						ctx.beginPath();
-						ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+						ctx.arc(this.x, this.y, Math.max(0.5, this.size), 0, Math.PI * 2);
 						ctx.fill();
 						ctx.restore();
 					}
@@ -117,17 +134,38 @@
 		
 		// Gradient helper
 		createGradient: (type: 'linear' | 'radial', ...args: number[]) => {
+			// Validate and sanitize parameters to prevent IndexSizeError
+			const sanitizeNumber = (num: number, defaultValue: number = 0) => {
+				return isNaN(num) || !isFinite(num) ? defaultValue : Math.max(0, Math.min(num, Math.max(width, height) * 2));
+			};
+			
 			if (type === 'linear') {
-				return ctx.createLinearGradient(args[0], args[1], args[2], args[3]);
+				// Linear gradient: x1, y1, x2, y2
+				const [x1 = 0, y1 = 0, x2 = width, y2 = height] = args;
+				return ctx.createLinearGradient(
+					sanitizeNumber(x1, 0),
+					sanitizeNumber(y1, 0),
+					sanitizeNumber(x2, width),
+					sanitizeNumber(y2, height)
+				);
 			} else {
-				return ctx.createRadialGradient(args[0], args[1], args[2], args[3], args[4], args[5]);
+				// Radial gradient: x1, y1, r1, x2, y2, r2
+				const [x1 = width/2, y1 = height/2, r1 = 0, x2 = width/2, y2 = height/2, r2 = 100] = args;
+				return ctx.createRadialGradient(
+					sanitizeNumber(x1, width/2),
+					sanitizeNumber(y1, height/2),
+					Math.max(0, sanitizeNumber(r1, 0)),
+					sanitizeNumber(x2, width/2),
+					sanitizeNumber(y2, height/2),
+					Math.max(1, sanitizeNumber(r2, 100)) // Ensure r2 is at least 1
+				);
 			}
 		},
 		
 		// Text with glow effect
-		drawGlowText: (text: string, x: number, y: number, size: number, color: string, glowColor: string) => {
+		drawGlowText: (text: string, x: number, y: number, size: number, color: string, glowColor: string, fontFamily?: string) => {
 			ctx.save();
-			ctx.font = `bold ${size}px "Segoe UI", Arial, sans-serif`;
+			ctx.font = `bold ${size}px ${fontFamily || '"Segoe UI", Arial, sans-serif'}`;
 			ctx.textAlign = 'center';
 			ctx.textBaseline = 'middle';
 			
@@ -136,14 +174,14 @@
 				ctx.save();
 				ctx.globalAlpha = 0.3 - (i * 0.1);
 				ctx.fillStyle = glowColor;
-				ctx.font = `bold ${size + i * 4}px "Segoe UI", Arial, sans-serif`;
+				ctx.font = `bold ${size + i * 4}px ${fontFamily || '"Segoe UI", Arial, sans-serif'}`;
 				ctx.fillText(text, x, y);
 				ctx.restore();
 			}
 			
 			// Main text
 			ctx.fillStyle = color;
-			ctx.font = `bold ${size}px "Segoe UI", Arial, sans-serif`;
+			ctx.font = `bold ${size}px ${fontFamily || '"Segoe UI", Arial, sans-serif'}`;
 			ctx.fillText(text, x, y);
 			ctx.restore();
 		},
@@ -247,24 +285,80 @@
 				animationId = null;
 			}
 			
-			// Create a function that has access to canvas context and utilities
-			const drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', code);
+			// Reset to first frame
+			currentTime = 0;
+			animationStartTime = 0;
 			
-			// Execute the drawing code
-			drawingFunction(ctx, canvas, width, height, canvasUtils);
+			// Validate the code doesn't contain dangerous patterns
+			const dangerousPatterns = [
+				/while\s*\(\s*true\s*\)/gi,
+				/for\s*\(\s*;\s*;\s*\)/gi,
+				/setInterval|setTimeout.*0/gi
+			];
+			
+			for (const pattern of dangerousPatterns) {
+				if (pattern.test(code)) {
+					throw new Error('Code contains potentially dangerous infinite loops');
+				}
+			}
+			
+			// Use canvasUtils if available, otherwise fallback to legacy utils
+			const utilsToUse = canvasUtils || legacyCanvasUtils;
+			
+			// Create a function that has access to canvas context and utilities
+			// Use 'canvasElement' to avoid conflicts with user code that might declare 'canvas'
+			const drawingFunction = new Function('ctx', 'canvasElement', 'width', 'height', 'utils', code);
+			
+			// Execute the drawing code to show first frame
+			drawingFunction(ctx, canvas, width, height, utilsToUse);
+			
+			// Also render first frame immediately if it uses animate
+			renderFirstFrame(drawingFunction);
 			
 			console.log('Drawing code executed successfully');
 		} catch (error) {
 			console.error('Error executing drawing code:', error);
 			clearCanvas();
 			
-			// Show error on canvas
-			ctx.fillStyle = '#ff0000';
-			ctx.font = '24px Arial';
+			// Show error on canvas with more helpful information
+			ctx.fillStyle = '#ff4444';
+			ctx.font = 'bold 24px Arial';
 			ctx.textAlign = 'center';
-			ctx.fillText('Error in drawing code', width/2, height/2);
+			ctx.fillText('⚠️ Graphics Code Error', width/2, height/2 - 40);
+			
+			ctx.fillStyle = '#ff6666';
 			ctx.font = '16px Arial';
-			ctx.fillText(error?.toString() || 'Unknown error', width/2, height/2 + 40);
+			const errorMsg = error?.toString() || 'Unknown error';
+			const lines = errorMsg.length > 60 ? [errorMsg.substring(0, 60) + '...'] : [errorMsg];
+			lines.forEach((line, i) => {
+				ctx.fillText(line, width/2, height/2 + 10 + (i * 20));
+			});
+			
+			ctx.fillStyle = '#ffaaaa';
+			ctx.font = '14px Arial';
+			ctx.fillText('Try asking for simpler graphics or reload the page', width/2, height/2 + 60);
+		}
+	}
+
+	function renderFirstFrame(drawingFunction: Function) {
+		// Use canvasUtils if available, otherwise fallback to legacy utils
+		const utilsToUse = canvasUtils || legacyCanvasUtils;
+		
+		// Create a special utils object that renders the first frame immediately
+		const firstFrameUtils = {
+			...utilsToUse,
+			animate: (drawFunction: (time: number) => void) => {
+				// Render first frame (time = 0) immediately
+				clearCanvas();
+				drawFunction(0);
+			}
+		};
+		
+		try {
+			// Execute with first frame utils to render initial state
+			drawingFunction(ctx, canvas, width, height, firstFrameUtils);
+		} catch (error) {
+			console.error('Error rendering first frame:', error);
 		}
 	}
 
@@ -362,6 +456,34 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 		
 		// Update time callback
 		onTimeUpdate?.(currentTime);
+		
+		// If not playing, render the specific frame
+		if (!isPlaying && drawingCode) {
+			renderSpecificFrame(currentTime * 1000);
+		}
+	}
+
+	function renderSpecificFrame(time: number) {
+		if (!drawingCode) return;
+		
+		try {
+			// Use canvasUtils if available, otherwise fallback to legacy utils
+			const utilsToUse = canvasUtils || legacyCanvasUtils;
+			
+			// Create utils that render a specific frame
+			const frameUtils = {
+				...utilsToUse,
+				animate: (drawFunction: (time: number) => void) => {
+					clearCanvas();
+					drawFunction(time);
+				}
+			};
+			
+			const drawingFunction = new Function('ctx', 'canvasElement', 'width', 'height', 'utils', drawingCode);
+			drawingFunction(ctx, canvas, width, height, frameUtils);
+		} catch (error) {
+			console.error('Error rendering specific frame:', error);
+		}
 	}
 
 	export function getCurrentTime() {
@@ -412,9 +534,12 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 			// Pre-compile the drawing function once for performance
 			const drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', drawingCode);
 			
+			// Use canvasUtils if available, otherwise fallback to legacy utils
+			const utilsToUse = canvasUtils || legacyCanvasUtils;
+			
 			// Create optimized utils for transparent rendering
 			const transparentUtils = {
-				...canvasUtils,
+				...utilsToUse,
 				animate: (drawFunction: (time: number) => void) => {
 					// Execute immediately for single frame
 					drawFunction(currentFrameTime);

@@ -21,6 +21,34 @@
 	// File input
 	let fileInput: HTMLInputElement;
 	
+	// Event listener for graphics generation from chat
+	onMount(() => {
+		const handleGraphicsGenerated = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const { code, duration: animDuration, title } = customEvent.detail;
+			console.log('Graphics generated:', title);
+			
+			// Update canvas with new graphics
+			drawingCode = code;
+			duration = animDuration;
+			
+			// Reset timeline
+			currentTime = 0;
+			isPlaying = false;
+			if (canvas) {
+				canvas.seek(0);
+				canvas.pause();
+			}
+		};
+		
+		// Listen for graphics generation events
+		window.addEventListener('graphicsGenerated', handleGraphicsGenerated);
+		
+		return () => {
+			window.removeEventListener('graphicsGenerated', handleGraphicsGenerated);
+		};
+	});
+	
 	// Timeline controls
 	function handlePlay() {
 		if (canvas) {
@@ -69,6 +97,47 @@
 		} finally {
 			isExporting = false;
 			exportProgress = 0;
+		}
+	}
+
+	// Code export handling
+	function handleCodeExport() {
+		if (!drawingCode.trim()) {
+			alert('No code to export. Generate some graphics first!');
+			return;
+		}
+
+		try {
+			// Create a properly formatted JavaScript file
+			const codeContent = `// Valuva AI Generated Canvas Graphics
+// Generated at: ${new Date().toLocaleString()}
+// Duration: ${duration} seconds
+
+// This code is designed to run with the Valuva canvas utilities
+// Pre-provided variables: ctx, canvas, width (1920), height (1080), utils
+
+${drawingCode}
+`;
+
+			// Create blob and download
+			const blob = new Blob([codeContent], { type: 'text/javascript' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			
+			// Generate filename with timestamp
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+			a.download = `valuva-graphics-${timestamp}.js`;
+			
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+			
+			console.log('Code exported successfully');
+		} catch (error) {
+			console.error('Code export error:', error);
+			alert('Failed to export code: ' + error);
 		}
 	}
 	
@@ -203,6 +272,18 @@ utils.animate((time) => {
 				>
 					Load Test Demo
 				</button>
+
+				<button 
+					onclick={handleCodeExport}
+					class="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm flex items-center gap-2"
+					disabled={!drawingCode.trim()}
+					title="Export the generated JavaScript code"
+				>
+					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+					</svg>
+					💾 Export Code
+				</button>
 			</div>
 			
 			<div class="text-sm text-gray-500">
@@ -229,6 +310,7 @@ utils.animate((time) => {
 			onPause={handlePause}
 			onSeek={handleSeek}
 			onExport={handleExport}
+			onExportCode={handleCodeExport}
 		/>
 	</div>
 
