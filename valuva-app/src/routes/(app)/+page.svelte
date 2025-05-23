@@ -90,9 +90,9 @@
 			
 			// Set appropriate duration based on file type
 			if (file.name.includes('simple')) {
-				duration = 10; // Simple demo loops every 10 seconds
+				duration = 3; // Simple demo loops every 3 seconds
 			} else {
-				duration = 15; // Advanced demo loops every 15 seconds
+				duration = 5; // Advanced demo loops every 5 seconds
 			}
 			
 			// Reset timeline
@@ -114,7 +114,7 @@
 	// Load demo for testing
 	function loadDemo() {
 		if (canvas) {
-			duration = 8; // Set duration for this demo (8 seconds loop)
+			duration = 3; // Set duration for this demo (3 seconds loop)
 			
 			drawingCode = `
 // Demo animation with timeline control

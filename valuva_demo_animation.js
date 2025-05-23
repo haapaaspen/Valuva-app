@@ -1,11 +1,11 @@
 // Valuva Demo Animation - Advanced Canvas Graphics
 // This file demonstrates the full capabilities of the Valuva canvas system
-// Animation Duration: 15 seconds (loops automatically)
+// Animation Duration: 5 seconds (loops automatically)
 
 // Create animated scene with timeline control
 utils.animate((time) => {
-    // Convert time to seconds and create a 15-second loop
-    const t = (time * 0.001) % 15;
+    // Convert time to seconds and create a 5-second loop
+    const t = (time * 0.001) % 5;
     
     // === ANIMATED BACKGROUND ===
     // Create a swirling gradient that changes over time
@@ -17,9 +17,9 @@ utils.animate((time) => {
         Math.max(width, height) * 0.8
     );
     
-    const hue1 = (t * 24) % 360;  // Complete hue cycle in 15 seconds
-    const hue2 = (t * 24 + 120) % 360;
-    const hue3 = (t * 24 + 240) % 360;
+    const hue1 = (t * 72) % 360;  // Complete hue cycle in 5 seconds
+    const hue2 = (t * 72 + 120) % 360;
+    const hue3 = (t * 72 + 240) % 360;
     
     gradient.addColorStop(0, `hsl(${hue1}, 70%, 15%)`);
     gradient.addColorStop(0.4, `hsl(${hue2}, 60%, 10%)`);
