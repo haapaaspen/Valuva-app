@@ -74,7 +74,7 @@
 		if (!ctx) return;
 		ctx.clearRect(0, 0, width, height);
 	}
-
+/* 
 	// Legacy utils for backward compatibility (will be replaced with full utils)
 	const legacyCanvasUtils = {
 		// Color palette
@@ -272,7 +272,7 @@
 			}
 		}
 	};
-
+ */
 	function executeDrawingCode(code: string) {
 		if (!ctx || !code.trim()) return;
 		
@@ -303,7 +303,7 @@
 			}
 			
 			// Use canvasUtils if available, otherwise fallback to legacy utils
-			const utilsToUse = canvasUtils || legacyCanvasUtils;
+			const utilsToUse = canvasUtils;
 			
 			// Create a function that has access to canvas context and utilities
 			// Use 'canvasElement' to avoid conflicts with user code that might declare 'canvas'
@@ -342,7 +342,7 @@
 
 	function renderFirstFrame(drawingFunction: Function) {
 		// Use canvasUtils if available, otherwise fallback to legacy utils
-		const utilsToUse = canvasUtils || legacyCanvasUtils;
+		const utilsToUse = canvasUtils;
 		
 		// Create a special utils object that renders the first frame immediately
 		const firstFrameUtils = {
@@ -468,7 +468,7 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 		
 		try {
 			// Use canvasUtils if available, otherwise fallback to legacy utils
-			const utilsToUse = canvasUtils || legacyCanvasUtils;
+			const utilsToUse = canvasUtils;
 			
 			// Create utils that render a specific frame
 			const frameUtils = {
@@ -531,30 +531,50 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 			const zip = new JSZip();
 			const frameFolder = zip.folder("valuva_transparent_frames");
 			
-			// Pre-compile the drawing function once for performance
-			const drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', drawingCode);
-			
-			// Use canvasUtils if available, otherwise fallback to legacy utils
-			const utilsToUse = canvasUtils || legacyCanvasUtils;
-			
-			// Create optimized utils for transparent rendering
-			const transparentUtils = {
-				...utilsToUse,
+			// Create export-compatible utils that render single frames
+			const exportUtils = {
+				...canvasUtils,
 				animate: (drawFunction: (time: number) => void) => {
-					// Execute immediately for single frame
+					// During export, just call the draw function with the current frame time
 					drawFunction(currentFrameTime);
 				}
 			};
 			
-			// Render frames with optimized loop
+			// Pre-compile the drawing function once for performance
+			let drawingFunction: (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, width: number, height: number, utils: any) => void;
+			try {
+				// Create a simplified version of the code that works during export
+				let exportCode = drawingCode;
+				
+				// Replace async font loading with immediate execution
+				exportCode = exportCode.replace(
+					/const script = document\.createElement\('script'\);[\s\S]*?startAnimation\(\);/g,
+					'// Font loading simplified for export\nstartAnimation();'
+				);
+				
+				// Ensure startAnimation is called immediately
+				if (!exportCode.includes('startAnimation();') && exportCode.includes('function startAnimation()')) {
+					exportCode += '\nstartAnimation();';
+				}
+				
+				drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', exportCode) as any;
+			} catch (error) {
+				console.error('Error compiling export code:', error);
+				// Fallback to original function
+				drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', drawingCode) as any;
+			}
+			
+			// Render frames
 			let currentFrameTime = 0;
 			
 			for (let frame = 0; frame < totalFrames; frame++) {
 				// Calculate exact time for this frame
 				currentFrameTime = frame * frameInterval;
 				
-				// Clear canvas and enable high quality
+				// Clear canvas completely (transparent background)
 				ctx.clearRect(0, 0, width, height);
+				
+				// Set high quality rendering
 				ctx.imageSmoothingEnabled = true;
 				ctx.imageSmoothingQuality = 'high';
 				ctx.lineCap = 'round';
@@ -563,23 +583,24 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 				
 				// Execute drawing code for this frame
 				try {
-					drawingFunction(ctx, canvas, width, height, transparentUtils);
+					drawingFunction(ctx, canvas, width, height, exportUtils);
 				} catch (error) {
 					console.error('Error rendering frame:', frame, error);
+					// Continue with next frame rather than failing completely
 				}
 				
-				// Export frame as PNG
+				// Export frame as PNG with transparency
 				const frameData = canvas.toDataURL('image/png');
 				const base64Data = frameData.replace(/^data:image\/png;base64,/, '');
 				const fileName = `frame_${String(frame + 1).padStart(4, '0')}.png`;
 				frameFolder?.file(fileName, base64Data, { base64: true });
 				
-				// Update progress only every 5 frames to reduce overhead
+				// Update progress
 				if (frame % 5 === 0) {
 					const progress = Math.round(((frame + 1) / totalFrames) * 100);
 					onProgress?.(progress);
 					
-					// Minimal delay only every 25 frames
+					// Small delay every 25 frames to prevent blocking
 					if (frame % 25 === 0) {
 						await new Promise(resolve => setTimeout(resolve, 1));
 					}
@@ -597,7 +618,7 @@ ctx.fillRect(barX, barY, barWidth * progress, barHeight);
 			const url = URL.createObjectURL(zipContent);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `valuva_animation_${totalFrames}frames_${fps}fps.zip`;
+			a.download = `valuva_transparent_animation_${totalFrames}frames_${fps}fps.zip`;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);

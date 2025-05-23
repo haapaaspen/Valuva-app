@@ -10,11 +10,13 @@
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import type { UIMessage } from '@ai-sdk/svelte';
+	import { Card, CardContent } from '../ui/card';
 
 	let { message, readonly, loading }: { message: UIMessage; readonly: boolean; loading: boolean } =
 		$props();
 
 	let mode = $state<'view' | 'edit'>('view');
+	let loadedFonts = $state<Set<string>>(new Set());
 	
 	// Auto-load graphics when they're generated
 	function loadGraphicsToCanvas(data: any) {
@@ -27,6 +29,41 @@
 				}
 			}));
 		}
+	}
+
+	// Load fonts into the page for preview
+	function loadFontsForPreview(families: string[]) {
+		if (typeof window === 'undefined') return;
+		
+		// Create a script element to load WebFont if not already loaded
+		if (!(window as any).WebFont) {
+			const script = document.createElement('script');
+			script.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js';
+			script.onload = () => loadFontsWithWebFont(families);
+			document.head.appendChild(script);
+		} else {
+			loadFontsWithWebFont(families);
+		}
+	}
+
+	function loadFontsWithWebFont(families: string[]) {
+		const webFont = (window as any).WebFont;
+		if (!webFont) return;
+		
+		webFont.load({
+			google: { families },
+			active: () => {
+				// Mark fonts as loaded
+				families.forEach(family => {
+					const fontName = family.split(':')[0];
+					loadedFonts.add(fontName);
+				});
+				loadedFonts = new Set(loadedFonts); // Trigger reactivity
+			},
+			inactive: () => {
+				console.log('Some fonts failed to load');
+			}
+		});
 	}
 </script>
 
@@ -114,49 +151,128 @@
 						{@const { args } = toolInvocation}
 						<div
 							class={cn({
-								skeleton: ['generateCanvasGraphics'].includes(toolName)
+								skeleton: toolName !== undefined // Apply skeleton to any tool call
 							})}
 						>
 							{#if toolName === 'generateCanvasGraphics'}
-								<div class="rounded-lg border bg-muted/50 p-4">
-									<div class="flex items-center gap-2 text-sm text-muted-foreground">
-										<div class="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
-										Generating canvas graphics: {args.title}
-									</div>
-								</div>
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm text-muted-foreground">
+											<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+											Generating canvas graphics{args.title ? `: ${args.title}` : '...'}
+										</div>
+									</CardContent>
+								</Card>
+							{:else if toolName === 'webfontloadertool'}
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm text-muted-foreground">
+											<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+											Loading web fonts: {args.families.join(', ')}
+										</div>
+									</CardContent>
+								</Card>
+							{:else}
+								<!-- Fallback for any other tools -->
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm text-muted-foreground">
+											<div class="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
+											Using tool: {toolName}...
+										</div>
+									</CardContent>
+								</Card>
 							{/if}
 						</div>
 					{:else if state === 'result'}
 					{@const { result } = toolInvocation}
 						<div>
 							{#if toolName === 'generateCanvasGraphics'}
-								<div class="rounded-lg border bg-green-50 p-4">
-									<div class="flex items-center gap-2 text-sm font-medium text-green-700 mb-2">
-										<div class="h-2 w-2 rounded-full bg-green-500"></div>
-										Graphics Generated: {result.data.title}
-									</div>
-									<div class="text-xs text-green-600">
-										Duration: {result.data.duration}s • Generated at {new Date(result.data.timestamp).toLocaleTimeString()}
-									</div>
-									<div class="mt-2 flex gap-2">
-										<button 
-											class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
-											onclick={() => {
-												loadGraphicsToCanvas(result.data);
-											}}
-										>
-											Load to Canvas
-										</button>
-										<span class="text-xs text-green-600 flex items-center">
-											✓ Auto-loaded to canvas
-										</span>
-									</div>
-								</div>
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+											<div class="h-2 w-2 rounded-full bg-primary"></div>
+											Graphics Generated: {result.data.title}
+										</div>
+										<div class="text-xs text-muted-foreground">
+											Duration: {result.data.duration}s • Generated at {new Date(result.data.timestamp).toLocaleTimeString()}
+										</div>
+										<div class="mt-2 flex gap-2">
+											<Button 
+												variant="default"
+												size="sm"
+												onclick={() => {
+													loadGraphicsToCanvas(result.data);
+												}}
+											>
+												Load to Canvas
+											</Button>
+											<span class="text-xs text-muted-foreground flex items-center">
+												✓ Auto-loaded to canvas
+											</span>
+										</div>
+									</CardContent>
+								</Card>
 								{#key result.data.timestamp}
 									{setTimeout(() => loadGraphicsToCanvas(result.data), 100), ''}
 								{/key}
+							{:else if toolName === 'webfontloadertool'}
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+											<div class="h-2 w-2 rounded-full bg-primary"></div>
+											Fonts Loaded Successfully
+										</div>
+										<div class="text-xs text-muted-foreground mb-3">
+											Loaded {result.data.fontNames.length} font families • {new Date(result.data.timestamp || Date.now()).toLocaleTimeString()}
+										</div>
+										
+										<!-- Trigger font loading for preview -->
+										{loadFontsForPreview(result.data.families), ''}
+										
+										<!-- Display each loaded font with preview -->
+										<div class="space-y-3">
+											{#each result.data.fontNames as fontName}
+												<div class="border rounded-lg p-3 bg-background">
+													<div class="text-xs font-medium text-muted-foreground mb-1">
+														{fontName}
+													</div>
+													<div class="text-lg font-medium transition-all duration-300" 
+														 style="font-family: '{fontName}'{loadedFonts.has(fontName) ? '' : ', sans-serif'}">
+														The quick brown fox jumps over the lazy dog
+													</div>
+													<div class="text-sm text-muted-foreground mt-1 transition-all duration-300" 
+														 style="font-family: '{fontName}'{loadedFonts.has(fontName) ? '' : ', sans-serif'}">
+														ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890
+													</div>
+													{#if !loadedFonts.has(fontName)}
+														<div class="text-xs text-yellow-600 mt-1 flex items-center gap-1">
+															<div class="h-1 w-1 rounded-full bg-yellow-500 animate-pulse"></div>
+															Loading font...
+														</div>
+													{:else}
+														<div class="text-xs text-green-600 mt-1 flex items-center gap-1">
+															<div class="h-1 w-1 rounded-full bg-green-500"></div>
+															Font loaded
+														</div>
+													{/if}
+												</div>
+											{/each}
+										</div>
+									</CardContent>
+								</Card>
 							{:else}
-								<pre>{JSON.stringify(result, null, 2)}</pre>
+								<Card class="bg-muted/50">
+									<CardContent class="p-4">
+										<div class="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+											<div class="h-2 w-2 rounded-full bg-primary"></div>
+											Tool Completed: {toolName}
+										</div>
+										<div class="text-xs text-muted-foreground">
+											Result: {typeof result === 'object' ? JSON.stringify(result).substring(0, 100) + '...' : result}
+										</div>
+									</CardContent>
+								</Card>
 							{/if}
 						</div>
 					{/if}

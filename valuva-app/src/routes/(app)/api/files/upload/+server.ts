@@ -17,6 +17,7 @@ const FileSchema = z.object({
 
 export async function POST({ request, locals: { user } }) {
 	if (!user) {
+		console.log('401: !user in POST of valuva-app/src/routes/(app)/api/files/upload/+server.ts');
 		error(401, 'Unauthorized');
 	}
 

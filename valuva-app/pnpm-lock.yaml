@@ -17,6 +17,9 @@ importers:
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
+      webfontloader:
+        specifier: ^1.6.28
+        version: 1.6.28
     devDependencies:
       '@ai-sdk/groq':
         specifier: ^1.2.0
@@ -2765,6 +2768,9 @@ packages:
       vite:
         optional: true
 
+  webfontloader@1.6.28:
+    resolution: {integrity: sha512-Egb0oFEga6f+nSgasH3E0M405Pzn6y3/9tOVanv/DLfa1YBIgcv90L18YyWnvXkRbIM17v5Kv6IT2N6g1x5tvQ==}
+
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
 
@@ -5293,6 +5299,8 @@ snapshots:
   vitefu@1.0.5(vite@6.1.0(@types/node@22.13.2)(jiti@2.4.2)(lightningcss@1.29.1)(yaml@2.7.0)):
     optionalDependencies:
       vite: 6.1.0(@types/node@22.13.2)(jiti@2.4.2)(lightningcss@1.29.1)(yaml@2.7.0)
+
+  webfontloader@1.6.28: {}
 
   webidl-conversions@3.0.1: {}
 

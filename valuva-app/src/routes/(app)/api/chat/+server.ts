@@ -2,7 +2,7 @@ import { myProvider } from '$lib/server/ai/models';
 import { systemPrompt } from '$lib/server/ai/prompts.js';
 import { generateTitleFromUserMessage } from '$lib/server/ai/utils';
 import { deleteChatById, getChatById, saveChat, saveMessages } from '$lib/server/db/queries.js';
-import { generateCanvasGraphics } from '$lib/server/ai/tools.js';
+import { generateCanvasGraphics, webfontloadertool } from '$lib/server/ai/tools.js';
 import type { Chat } from '$lib/server/db/schema';
 import { getMostRecentUserMessage, getTrailingMessageId } from '$lib/utils/chat.js';
 import { allowAnonymousChats } from '$lib/utils/constants.js';
@@ -77,15 +77,26 @@ export async function POST({ request, locals: { user }, cookies }) {
 				system: systemPrompt({ selectedChatModel }),
 				messages,
 				maxSteps: 5,
-				experimental_activeTools: ['generateCanvasGraphics'],
+				experimental_activeTools: ['generateCanvasGraphics', 'webfontloadertool'],
 				// TODO
 				// selectedChatModel === 'chat-model-reasoning'
 				// 	? []
 				// 	: ['getWeather', 'createDocument', 'updateDocument', 'requestSuggestions'],
 				experimental_transform: smoothStream({ chunking: 'word' }),
 				experimental_generateMessageId: crypto.randomUUID.bind(crypto),
+				// TODO
+				// tools: {
+				// 	getWeather,
+				// 	createDocument: createDocument({ session, dataStream }),
+				// 	updateDocument: updateDocument({ session, dataStream }),
+				// 	requestSuggestions: requestSuggestions({
+				// 		session,
+				// 		dataStream
+				// 	})
+				// },
 				tools: {
-					generateCanvasGraphics
+					generateCanvasGraphics,
+					webfontloadertool
 				},
 				onFinish: async ({ response }) => {
 					if (!user) return;

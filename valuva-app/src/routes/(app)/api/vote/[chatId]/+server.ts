@@ -4,6 +4,7 @@ import { ok, safeTry } from 'neverthrow';
 
 export async function GET({ locals: { user }, params: { chatId } }) {
 	if (!user) {
+		console.log('401: !user in POST of valuva-app/src/routes/(app)/api/vote/[chatId]/+server.ts');
 		error(401, 'Unauthorized');
 	}
 

@@ -79,6 +79,7 @@
 	"dependencies": {
 		"@ai-sdk/anthropic": "^1.2.11",
 		"ag-psd": "^28.1.0",
-		"jszip": "^3.10.1"
+		"jszip": "^3.10.1",
+		"webfontloader": "^1.6.28"
 	}
 }

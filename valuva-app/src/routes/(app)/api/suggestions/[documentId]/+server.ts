@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 
 export async function GET({ locals: { user }, params: { documentId } }) {
 	if (!user) {
+		console.log('401: !user in POST of valuva-app/src/routes/(app)/api/suggestions/[documentId]/+server.ts');
 		error(401, 'Unauthorized');
 	}
 
