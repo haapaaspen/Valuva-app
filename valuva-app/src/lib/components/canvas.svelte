@@ -277,7 +277,10 @@
 		if (!ctx || !code.trim()) return;
 		
 		try {
-			console.log('Executing drawing code...');
+			console.log('🎨 Executing drawing code...');
+			
+			// Simply remove import statements - GSAP is already global
+			const cleanCode = code.replace(/import\s+.*?\s+from\s+['"`]gsap['"`]\s*;?/g, '// GSAP is available globally');
 			
 			// Stop any existing animation
 			if (animationId) {
@@ -289,38 +292,25 @@
 			currentTime = 0;
 			animationStartTime = 0;
 			
-			// Validate the code doesn't contain dangerous patterns
-			const dangerousPatterns = [
-				/while\s*\(\s*true\s*\)/gi,
-				/for\s*\(\s*;\s*;\s*\)/gi,
-				/setInterval|setTimeout.*0/gi
-			];
-			
-			for (const pattern of dangerousPatterns) {
-				if (pattern.test(code)) {
-					throw new Error('Code contains potentially dangerous infinite loops');
-				}
-			}
-			
-			// Use canvasUtils if available, otherwise fallback to legacy utils
+			// Use canvasUtils if available
 			const utilsToUse = canvasUtils;
 			
-			// Create a function that has access to canvas context and utilities
-			// Use 'canvasElement' to avoid conflicts with user code that might declare 'canvas'
-			const drawingFunction = new Function('ctx', 'canvasElement', 'width', 'height', 'utils', code);
+			// Create and execute the drawing function
+			// Change 'canvasElement' to 'canvas' to match expected variable name
+			const drawingFunction = new Function('ctx', 'canvas', 'width', 'height', 'utils', cleanCode);
+			//                                           ^^^^^^
+			//                                           Fixed parameter name
 			
-			// Execute the drawing code to show first frame
+			// Execute the code
 			drawingFunction(ctx, canvas, width, height, utilsToUse);
 			
-			// Also render first frame immediately if it uses animate
-			renderFirstFrame(drawingFunction);
+			console.log('✅ Drawing code executed successfully');
 			
-			console.log('Drawing code executed successfully');
 		} catch (error) {
-			console.error('Error executing drawing code:', error);
+			console.error('❌ Error executing drawing code:', error);
 			clearCanvas();
 			
-			// Show error on canvas with more helpful information
+			// Show error on canvas
 			ctx.fillStyle = '#ff4444';
 			ctx.font = 'bold 24px Arial';
 			ctx.textAlign = 'center';
@@ -333,10 +323,6 @@
 			lines.forEach((line, i) => {
 				ctx.fillText(line, width/2, height/2 + 10 + (i * 20));
 			});
-			
-			ctx.fillStyle = '#ffaaaa';
-			ctx.font = '14px Arial';
-			ctx.fillText('Try asking for simpler graphics or reload the page', width/2, height/2 + 60);
 		}
 	}
 
