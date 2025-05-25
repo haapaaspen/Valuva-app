@@ -26,9 +26,9 @@ export const generateCanvasGraphics = tool({
 });
 
 export const webfontloadertool = tool({
-	description: 'Load Google Fonts using webfontloadertool for canvas graphics. Specify font families with optional weights and subsets.',
+	description: 'Load Google Fonts using webfontloadertool. Invent new font palettes that match the Mise-en-scène. Follow typographic hierarchy principles: primary (bold/display), secondary (medium/body), and tertiary (light/caption) weights.',
 	parameters: z.object({
-		families: z.array(z.string()).describe('Array of Google Font family names with optional weights (e.g., ["Inter:400,700", "Playfair Display:400,600,900", "Roboto Mono"])')
+		families: z.array(z.string()).describe('Array of Google Font family names with weights following typographic hierarchy')
 	}),
 	execute: async ({ families }) => {
 		console.log('AI uses webfontloadertool tool with families:', families);
