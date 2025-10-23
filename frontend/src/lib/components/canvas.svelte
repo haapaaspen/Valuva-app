@@ -1,74 +1,75 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { createCanvasUtils } from "$lib/canvas-utils";
-	import JSZip from "jszip";
 	import { animation } from "$lib/hooks/animation.svelte";
-	import { timeline } from "$lib/hooks/timeline.svelte";
+	import { tick_ms, timeline } from "$lib/hooks/timeline.svelte";
+	import { renderService } from "$lib/services/render-service";
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D;
-	let displayWidth = $state(800);
-	let displayHeight = $state(450);
-
-	let drawFunction: ((time_ms: number) => void) | null = null;
-	let animationFrameId: number | null = null;
 
 	onMount(() => {
-		ctx = canvas.getContext("2d")!;
-		ctx.clearRect(0, 0, animation.width, animation.height);
-
-		render();
-
-		return () => {
-			if (animationFrameId) {
-				cancelAnimationFrame(animationFrameId);
-			}
-		};
+		ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+		// Initial clear
+		ctx.fillStyle = "#000";
+		ctx.fillRect(0, 0, animation.width, animation.height);
 	});
 
+	// Watch the animation.code for changes and recompile
 	$effect(() => {
-		executeAnimationCode(animation.code);
-		return () => {
-			if (animationFrameId) {
-				cancelAnimationFrame(animationFrameId);
-			}
-		};
+		const code = animation.code;
+
+		const success = renderService.compileAnimation(code);
+
+		if (!success && ctx) {
+			// Clear canvas on compilation error
+			ctx.fillStyle = "#000";
+			ctx.fillRect(0, 0, animation.width, animation.height);
+		}
 	});
 
-	function render() {
-		if (drawFunction) {
-			// Convert timeline seconds to milliseconds
-			const time_ms = timeline.currentTime * 1000;
-			drawFunction(time_ms);
-		}
-		animationFrameId = requestAnimationFrame(render);
-	}
+	// Rendering loop - just display frames from RenderService
+	$effect(() => {
+		if (!ctx || !canvas) return;
 
-	function executeAnimationCode(code: string) {
-		drawFunction = null;
-		const utils = {
-			animate: (fn: (time_ms: number) => void) => {
-				drawFunction = fn;
-			},
-		};
-		const animFunction = new Function(
-			"ctx",
-			"canvas",
-			"width",
-			"height",
-			"utils",
-			code,
+		const imageData = renderService.getFrame(
+			timeline.currentTime_ms,
+			canvas,
 		);
-		animFunction(ctx, canvas, animation.width, animation.height, utils);
-	}
+
+		if (imageData) {
+			ctx.putImageData(imageData, 0, 0);
+		}
+	});
+
+	// Play loop
+	$effect(() => {
+		if (!timeline.isPlaying) return;
+
+		let rafId: number;
+
+		const tick = () => {
+			// Always advance by exactly one frame
+			timeline.currentTime_ms += tick_ms;
+
+			if (timeline.currentTime_ms >= animation.duration) {
+				timeline.currentTime_ms =
+					timeline.currentTime_ms % animation.duration;
+			}
+
+			rafId = requestAnimationFrame(tick);
+		};
+
+		rafId = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(rafId);
+	});
 </script>
 
-<div class="relative w-full h-full">
+<div class="relative">
 	<canvas
 		bind:this={canvas}
 		width={animation.width}
 		height={animation.height}
-		style="width: {displayWidth}px; height: {displayHeight}px; display: block;"
+		style="width: 100%; display: block;"
 		class="rounded-lg"
 	></canvas>
 </div>

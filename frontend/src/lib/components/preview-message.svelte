@@ -1,27 +1,29 @@
 <script lang="ts">
 	import type { UIMessage } from "@ai-sdk/svelte";
+	import Markdown from "$lib/components/markdown.svelte";
 
 	let { message, loading }: { message: UIMessage; loading: boolean } =
 		$props();
 
-	// Dispatch graphics generation events when tool calls are detected
-	$effect(() => {
-		if (message.role === "assistant" && message.toolInvocations) {
-			message.toolInvocations.forEach((tool) => {
-				if (
-					tool.toolName === "generateCanvasGraphics" &&
-					tool.state === "result"
-				) {
-					const { code, duration, title } = (tool as any).result.data;
-					window.dispatchEvent(
-						new CustomEvent("graphicsGenerated", {
-							detail: { code, duration, title },
-						}),
-					);
-				}
-			});
+	// Dispatch an event so we don't mutate state during render
+	function loadGraphicsToCanvas(data: {
+		code: string;
+		duration: number;
+		title?: string;
+		timestamp?: string;
+	}) {
+		if (typeof window !== "undefined") {
+			window.dispatchEvent(
+				new CustomEvent("graphicsGenerated", {
+					detail: {
+						code: data.code,
+						duration: data.duration,
+						title: data.title,
+					},
+				}),
+			);
 		}
-	});
+	}
 </script>
 
 <div
@@ -31,23 +33,33 @@
 >
 	<div class="max-w-[80%] rounded-lg px-4 py-2 bg-accent text-foreground">
 		{#if message.parts}
-			{#each message.parts as part}
+			{#each message.parts as part, i (`${message.id}-${i}`)}
 				{#if part.type === "text"}
-					<div class="whitespace-pre-wrap">{part.text}</div>
-				{/if}
-			{/each}
-		{/if}
+					<Markdown content={part.text} />
+				{:else if part.type === "tool-invocation"}
+					{@const toolInvocation = (part as any).toolInvocation}
+					{@const { toolName, state } = toolInvocation}
 
-		{#if message.toolInvocations}
-			{#each message.toolInvocations as tool}
-				{#if tool.state === "call"}
-					<div class="text-sm opacity-75 mt-2">
-						🛠️ Using tool: {tool.toolName}
-					</div>
-				{:else if tool.state === "result"}
-					<div class="text-sm opacity-75 mt-2">
-						✅ {tool.toolName} completed
-					</div>
+					{#if state === "call"}
+						<div class="text-sm opacity-75 mt-2">
+							🛠️ Using tool: {toolName}
+						</div>
+					{:else if state === "result"}
+						{@const { result } = toolInvocation}
+						<div class="text-sm opacity-75 mt-2">
+							✅ {toolName} completed
+						</div>
+
+						{#if toolName === "generateCanvasGraphics" && result?.data}
+							{#key result.data.timestamp}
+								{(setTimeout(
+									() => loadGraphicsToCanvas(result.data),
+									0,
+								),
+								"")}
+							{/key}
+						{/if}
+					{/if}
 				{/if}
 			{/each}
 		{/if}

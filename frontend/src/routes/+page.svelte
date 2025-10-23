@@ -2,6 +2,23 @@
     import Canvas from "$lib/components/canvas.svelte";
     import Chat from "$lib/components/chat.svelte";
     import Timeline from "$lib/components/timeline.svelte";
+    import { onMount } from "svelte";
+    import { AnimationService } from "$lib/services/animation-service";
+
+    onMount(() => {
+        const handler = (
+            e: CustomEvent<{ code: string; duration: number; title?: string }>,
+        ) => {
+            const { code, duration, title } = e.detail;
+            AnimationService.updateFromAITool(code, duration, title);
+        };
+        window.addEventListener("graphicsGenerated", handler as EventListener);
+        return () =>
+            window.removeEventListener(
+                "graphicsGenerated",
+                handler as EventListener,
+            );
+    });
 </script>
 
 <div class="flex flex-col h-screen bg-surface-muted text-foreground">

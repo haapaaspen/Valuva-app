@@ -1,6 +1,6 @@
 import { myProvider } from '$lib/server/ai/models';
 import { systemPrompt } from '$lib/server/ai/prompts.js';
-import { generateCanvasGraphics } from '$lib/server/ai/tools.js';
+import { generateCanvasGraphics, webfontloadertool } from '$lib/server/ai/tools.js';
 import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 
 export async function POST({ request, cookies }) {
