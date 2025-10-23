@@ -1,0 +1,39 @@
+{
+	"name": "frontend",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^6.1.1",
+		"@sveltejs/kit": "^2.47.2",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@tailwindcss/vite": "^4.1.15",
+		"svelte": "^5.41.2",
+		"svelte-check": "^4.3.3",
+		"tailwindcss": "^4.1.15",
+		"typescript": "^5.9.3",
+		"vite": "^7.1.11"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild"
+		]
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^1.2.12",
+		"@ai-sdk/svelte": "^2.1.0",
+		"ai": "^4.3.19",
+		"gsap": "^3.13.0",
+		"jszip": "^3.10.1",
+		"svelte-sonner": "^0.3.28",
+		"zod": "^3.25.76"
+	}
+}
