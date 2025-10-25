@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { exportState } from "$lib/domains/animation/animation-store.svelte";
     import {
-        exportStatus,
         exportVideo,
         exportPngSequence,
-    } from "$lib/services/exporter-service.svelte";
+    } from "$lib/domains/animation/export-service";
 
     let showDropdown = $state(false);
     let dropdownEl: HTMLDivElement | undefined;
@@ -38,15 +38,15 @@
         class="text-sm border border-primary rounded-md px-4 py-2 hover:border-primary/90 flex items-center gap-2 transition-colors {showDropdown
             ? 'bg-background'
             : ''}"
-        disabled={exportStatus.isExporting}
+        disabled={exportState.isExporting}
         onclick={(e) => {
             e.stopPropagation();
             showDropdown = !showDropdown;
         }}
         title="Export animation"
     >
-        {#if exportStatus.isExporting}
-            <span>Exporting... {exportStatus.progress}%</span>
+        {#if exportState.isExporting}
+            <span>Exporting... {exportState.progress}%</span>
         {:else}
             <span>Export</span>
             <svg
@@ -63,7 +63,7 @@
         {/if}
     </button>
 
-    {#if showDropdown && !exportStatus.isExporting}
+    {#if showDropdown && !exportState.isExporting}
         <div
             class="absolute right-0 bottom-full mb-2 w-48 bg-background border border-border rounded-md shadow-lg z-50 overflow-hidden"
         >

@@ -14,11 +14,6 @@
 		messages: UIMessage[];
 	} = $props();
 
-	let mounted = $state(false);
-	onMount(() => {
-		mounted = true;
-	});
-
 	$effect(() => {
 		if (!(containerRef && endRef)) return;
 
@@ -42,7 +37,7 @@
 	bind:this={containerRef}
 	class="flex min-w-0 flex-1 flex-col gap-6 overflow-y-scroll pt-4 px-4 no-scrollbar"
 >
-	{#if mounted && messages.length === 0}
+	{#if messages.length === 0}
 		<div class="text-center text-foreground/60 py-8">
 			<h2 class="text-2xl font-bold mb-2">Hello there!</h2>
 			<p>Start a conversation about motion graphics</p>

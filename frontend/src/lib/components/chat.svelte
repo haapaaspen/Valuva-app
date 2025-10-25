@@ -1,37 +1,24 @@
 <script lang="ts">
-	import { Chat } from "@ai-sdk/svelte";
-	import { toast } from "svelte-sonner";
 	import Messages from "./messages.svelte";
-	import MultimodalInput from "./multimodal-input.svelte";
-	import { untrack } from "svelte";
+	import MultimodalInput from "./input-box.svelte";
 	import type { UIMessage } from "@ai-sdk/svelte";
+	import { ChatClient } from "$lib/domains/chat/chat-client";
 
-	let {
-		initialMessages,
-	}: {
-		initialMessages: UIMessage[];
-	} = $props();
+	const chatClient = new ChatClient();
 
-	const chatClient = $derived(
-		new Chat({
-			id: crypto.randomUUID(),
-			initialMessages: untrack(() => initialMessages),
-			sendExtraMessageFields: true,
-			generateId: crypto.randomUUID.bind(crypto),
-			onError: (error: Error) => {
-				console.error(error);
-				toast.error(error.message || "Something went wrong");
-			},
-		}),
-	);
+	$effect(() => {
+		const messages = chatClient.messages;
+		if (messages.length > 0) {
+			const lastMessage = messages[messages.length - 1];
+			if (lastMessage.role === "assistant") {
+				chatClient.handleAIMessage(lastMessage);
+			}
+		}
+	});
 </script>
 
 <div class="flex h-full min-w-0 flex-col">
-	<Messages
-		loading={chatClient.status === "streaming" ||
-			chatClient.status === "submitted"}
-		messages={chatClient.messages}
-	/>
+	<Messages loading={chatClient.isLoading} messages={chatClient.messages} />
 
 	<div class="p-6">
 		<MultimodalInput {chatClient} />

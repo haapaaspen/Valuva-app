@@ -1,6 +1,10 @@
 <script lang="ts">
-	import { timeline, tick_ms } from "$lib/hooks/timeline.svelte";
-	import { animation } from "$lib/hooks/animation.svelte";
+	import {
+		timeline,
+		animation,
+		TICK_MS,
+	} from "$lib/domains/animation/animation-store.svelte";
+	import { AnimationService } from "$lib/domains/animation/animation-service";
 	import ExportDropdown from "$lib/components/export-dropdown.svelte";
 
 	let isDragging = $state(false);
@@ -14,16 +18,15 @@
 		const percentage = Math.max(0, Math.min(1, x / rect.width));
 		const rawTime = percentage * animation.duration;
 
-		timeline.currentTime_ms = Math.max(
-			0,
-			Math.min(animation.duration, rawTime),
+		AnimationService.seek(
+			Math.max(0, Math.min(animation.duration, rawTime)),
 		);
 	}
 
 	function handleMouseDown(event: MouseEvent) {
 		isDragging = true;
 		const wasPlaying = timeline.isPlaying;
-		timeline.isPlaying = false;
+		AnimationService.pause();
 
 		handleTimelineClick(event);
 
@@ -35,7 +38,7 @@
 		function handleMouseUp() {
 			isDragging = false;
 			if (wasPlaying) {
-				timeline.isPlaying = true;
+				AnimationService.play();
 			}
 			document.removeEventListener("mousemove", handleMouseMove);
 			document.removeEventListener("mouseup", handleMouseUp);
@@ -51,30 +54,31 @@
 		switch (event.key) {
 			case "ArrowLeft":
 				event.preventDefault();
-				timeline.currentTime_ms = Math.max(
-					0,
-					timeline.currentTime_ms - tick_ms,
+				AnimationService.seek(
+					Math.max(0, timeline.currentTime - TICK_MS),
 				);
 				break;
 			case "ArrowRight":
 				event.preventDefault();
-				timeline.currentTime_ms = Math.min(
-					animation.duration,
-					timeline.currentTime_ms + tick_ms,
+				AnimationService.seek(
+					Math.min(
+						animation.duration,
+						timeline.currentTime + TICK_MS,
+					),
 				);
 				break;
 			case "Home":
 				event.preventDefault();
-				timeline.currentTime_ms = 0;
+				AnimationService.seek(0);
 				break;
 			case "End":
 				event.preventDefault();
-				timeline.currentTime_ms = animation.duration;
+				AnimationService.seek(animation.duration);
 				break;
 			case " ":
 			case "Enter":
 				event.preventDefault();
-				timeline.isPlaying = !timeline.isPlaying;
+				AnimationService.togglePlayPause();
 				break;
 		}
 	}
@@ -127,10 +131,10 @@
 			aria-label="Timeline scrubber"
 			aria-valuemin="0"
 			aria-valuemax={animation.duration}
-			aria-valuenow={timeline.currentTime_ms}
-			aria-valuetext="{formatTime(
-				timeline.currentTime_ms,
-			)} of {formatTime(animation.duration)}"
+			aria-valuenow={timeline.currentTime}
+			aria-valuetext="{formatTime(timeline.currentTime)} of {formatTime(
+				animation.duration,
+			)}"
 			onmousedown={handleMouseDown}
 			onclick={handleTimelineClick}
 			onkeydown={handleKeyDown}
@@ -141,7 +145,7 @@
 					0,
 					Math.min(
 						100,
-						(timeline.currentTime_ms / animation.duration) * 100,
+						(timeline.currentTime / animation.duration) * 100,
 					),
 				)}%"
 			></div>
@@ -154,7 +158,7 @@
 					0,
 					Math.min(
 						100,
-						(timeline.currentTime_ms / animation.duration) * 100,
+						(timeline.currentTime / animation.duration) * 100,
 					),
 				)}%"
 			></div>
@@ -172,7 +176,7 @@
 		<div class="flex items-center justify-between mb-3">
 			<div class="flex items-center gap-3">
 				<button
-					onclick={() => (timeline.isPlaying = !timeline.isPlaying)}
+					onclick={() => AnimationService.togglePlayPause()}
 					class="text-sm border text-primary border-primary rounded-full px-2 py-2 hover:border-primary/90"
 					title={timeline.isPlaying ? "Pause" : "Play"}
 				>

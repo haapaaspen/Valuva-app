@@ -2,35 +2,21 @@
     import Canvas from "$lib/components/canvas.svelte";
     import Chat from "$lib/components/chat.svelte";
     import Timeline from "$lib/components/timeline.svelte";
-    import { onMount } from "svelte";
-    import { AnimationService } from "$lib/services/animation-service";
 
-    onMount(() => {
-        const handler = (
-            e: CustomEvent<{ code: string; duration: number; title?: string }>,
-        ) => {
-            const { code, duration, title } = e.detail;
-            AnimationService.updateFromAITool(code, duration, title);
-        };
-        window.addEventListener("graphicsGenerated", handler as EventListener);
-        return () =>
-            window.removeEventListener(
-                "graphicsGenerated",
-                handler as EventListener,
-            );
-    });
+    // Note: Graphics loading is now handled by ChatClient
+    // No need for context anymore - direct domain communication
 </script>
 
 <div class="flex flex-col h-screen bg-surface-muted text-foreground">
     <div class="flex h-screen overflow-hidden">
-        <!-- Chat panel with subtle separation -->
+        <!-- Chat panel block -->
         <div
             class="no-scrollbar w-1/4 border-r border-border/60 bg-surface-muted"
         >
-            <Chat initialMessages={[]} />
+            <Chat />
         </div>
 
-        <!-- Unified canvas + timeline card -->
+        <!-- Canvas + timeline block -->
         <div class="flex-1 p-6">
             <div
                 class="h-full w-full rounded-xl bg-surface border border-border shadow-sm overflow-hidden flex flex-col"

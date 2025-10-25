@@ -1,14 +1,18 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { animation } from "$lib/hooks/animation.svelte";
-	import { tick_ms, timeline } from "$lib/hooks/timeline.svelte";
-	import { renderService } from "$lib/services/render-service";
+	import {
+		animation,
+		timeline,
+	} from "$lib/domains/animation/animation-store.svelte";
+	import { renderService } from "$lib/domains/animation/render-service";
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D;
 
 	onMount(() => {
 		ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+		renderService.setCanvas(canvas, ctx);
+
 		// Initial clear
 		ctx.fillStyle = "#000";
 		ctx.fillRect(0, 0, animation.width, animation.height);
@@ -18,7 +22,7 @@
 	$effect(() => {
 		const code = animation.code;
 
-		const success = renderService.compileAnimation(code);
+		const success = renderService.compile(code);
 
 		if (!success && ctx) {
 			// Clear canvas on compilation error
@@ -27,40 +31,24 @@
 		}
 	});
 
-	// Rendering loop - just display frames from RenderService
+	// Rendering loop - display frames from RenderService
 	$effect(() => {
 		if (!ctx || !canvas) return;
 
-		const imageData = renderService.getFrame(
-			timeline.currentTime_ms,
-			canvas,
-		);
-
-		if (imageData) {
-			ctx.putImageData(imageData, 0, 0);
-		}
+		renderService.renderFrame(timeline.currentTime);
 	});
 
-	// Play loop
+	// Playback control
 	$effect(() => {
-		if (!timeline.isPlaying) return;
+		if (timeline.isPlaying) {
+			renderService.startPlayback();
+		} else {
+			renderService.stopPlayback();
+		}
 
-		let rafId: number;
-
-		const tick = () => {
-			// Always advance by exactly one frame
-			timeline.currentTime_ms += tick_ms;
-
-			if (timeline.currentTime_ms >= animation.duration) {
-				timeline.currentTime_ms =
-					timeline.currentTime_ms % animation.duration;
-			}
-
-			rafId = requestAnimationFrame(tick);
+		return () => {
+			renderService.stopPlayback();
 		};
-
-		rafId = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(rafId);
 	});
 </script>
 
