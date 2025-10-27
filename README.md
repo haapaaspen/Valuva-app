@@ -1,4 +1,4 @@
-# Valuva AI Frontend - Minimal Setup
+# Valuva AI
 
 This is a minimal implementation of the Valuva AI chatbot with canvas graphics rendering capabilities.
 
