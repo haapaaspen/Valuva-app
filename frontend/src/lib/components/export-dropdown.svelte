@@ -1,9 +1,6 @@
 <script lang="ts">
-    import { exportState } from "$lib/domains/animation/animation-store.svelte";
-    import {
-        exportVideo,
-        exportPngSequence,
-    } from "$lib/domains/animation/export-service";
+    import { exportService } from "$lib/domains/animation/instances";
+    import { exportState } from "$lib/domains/animation/export-state.svelte";
 
     let showDropdown = $state(false);
     let dropdownEl: HTMLDivElement | undefined;
@@ -11,9 +8,9 @@
     function handleExport(type: "video" | "png") {
         showDropdown = false;
         if (type === "video") {
-            exportVideo();
+            exportService.exportVideo();
         } else {
-            exportPngSequence();
+            exportService.exportPngSequence();
         }
     }
 

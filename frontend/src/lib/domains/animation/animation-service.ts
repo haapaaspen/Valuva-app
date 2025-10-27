@@ -1,82 +1,53 @@
 /**
  * Animation Service - Business logic for animation management
- * Centralized control for all animation operations
+ * Handles file operations and animation data validation
+ * State is owned externally for reactivity
  */
 
-import { animation, timeline, quantizeTime } from './animation-store.svelte';
-import { renderService } from './render-service';
 import type { AnimationData } from './types';
 
+type AnimationState = {
+	code: string;
+	duration: number;
+	width: number;
+	height: number;
+	title: string;
+};
+
 export class AnimationService {
+	constructor(private state: AnimationState) {}
+
+	// Getters for accessing state
+	get code() { return this.state.code; }
+	get duration() { return this.state.duration; }
+	get width() { return this.state.width; }
+	get height() { return this.state.height; }
+	get title() { return this.state.title; }
+
 	/**
 	 * Load animation from AI-generated graphics
 	 */
-	static loadFromAI(data: AnimationData): void {
-		animation.code = data.code;
-		animation.duration = data.duration * 1000; // convert to ms
-		animation.title = data.title || 'Untitled Animation';
+	loadFromAI(data: AnimationData): void {
+		if (!this.validate(data)) {
+			console.error('[AnimationService] Validation failed');
+			return;
+		}
 
-		// Reset timeline when new animation loads
-		this.stop();
-		this.seek(0);
-
-		// Compile the new animation
-		renderService.compile(data.code);
+		this.state.code = data.code;
+		this.state.duration = data.duration * 1000; // convert to ms
+		this.state.title = data.title || 'Untitled Animation';
 
 		console.log('[AnimationService] Loaded animation:', {
-			title: animation.title,
+			title: this.state.title,
 			duration: data.duration,
 			codeLength: data.code.length,
 		});
 	}
 
 	/**
-	 * Play animation
+	 * TODO: Real validation
 	 */
-	static play(): void {
-		timeline.isPlaying = true;
-		console.log('[AnimationService] Playing');
-	}
-
-	/**
-	 * Pause animation
-	 */
-	static pause(): void {
-		timeline.isPlaying = false;
-		console.log('[AnimationService] Paused');
-	}
-
-	/**
-	 * Stop animation (pause and reset to start)
-	 */
-	static stop(): void {
-		timeline.isPlaying = false;
-		timeline.currentTime = 0;
-		console.log('[AnimationService] Stopped');
-	}
-
-	/**
-	 * Toggle play/pause
-	 */
-	static togglePlayPause(): void {
-		if (timeline.isPlaying) {
-			this.pause();
-		} else {
-			this.play();
-		}
-	}
-
-	/**
-	 * Seek to specific time
-	 */
-	static seek(time_ms: number): void {
-		timeline.currentTime = quantizeTime(time_ms);
-	}
-
-	/**
-	 * TODO: Validate animation data
-	 */
-	static validate(data: AnimationData): boolean {
+	private validate(data: AnimationData): boolean {
 		if (!data.code || data.code.trim().length === 0) {
 			console.error('[AnimationService] Invalid code');
 			return false;
@@ -90,4 +61,3 @@ export class AnimationService {
 		return true;
 	}
 }
-

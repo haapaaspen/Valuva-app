@@ -1,11 +1,10 @@
 <script lang="ts">
-	import {
-		timeline,
-		animation,
-		TICK_MS,
-	} from "$lib/domains/animation/animation-store.svelte";
-	import { AnimationService } from "$lib/domains/animation/animation-service";
+	import { timelineService } from "$lib/domains/animation/instances";
+	import { animationState } from "$lib/domains/animation/animation-state.svelte";
+	import { timelineState } from "$lib/domains/animation/timeline-state.svelte";
 	import ExportDropdown from "$lib/components/export-dropdown.svelte";
+
+	const TICK_MS = 1000 / 60;
 
 	let isDragging = $state(false);
 	let timelineEl: HTMLDivElement | undefined;
@@ -16,17 +15,17 @@
 		const rect = timelineEl.getBoundingClientRect();
 		const x = event.clientX - rect.left;
 		const percentage = Math.max(0, Math.min(1, x / rect.width));
-		const rawTime = percentage * animation.duration;
+		const rawTime = percentage * animationState.duration;
 
-		AnimationService.seek(
-			Math.max(0, Math.min(animation.duration, rawTime)),
+		timelineService.seek(
+			Math.max(0, Math.min(animationState.duration, rawTime)),
 		);
 	}
 
 	function handleMouseDown(event: MouseEvent) {
 		isDragging = true;
-		const wasPlaying = timeline.isPlaying;
-		AnimationService.pause();
+		const wasPlaying = timelineState.isPlaying;
+		timelineService.pause();
 
 		handleTimelineClick(event);
 
@@ -38,7 +37,7 @@
 		function handleMouseUp() {
 			isDragging = false;
 			if (wasPlaying) {
-				AnimationService.play();
+				timelineService.play();
 			}
 			document.removeEventListener("mousemove", handleMouseMove);
 			document.removeEventListener("mouseup", handleMouseUp);
@@ -54,31 +53,31 @@
 		switch (event.key) {
 			case "ArrowLeft":
 				event.preventDefault();
-				AnimationService.seek(
-					Math.max(0, timeline.currentTime - TICK_MS),
+				timelineService.seek(
+					Math.max(0, timelineState.currentTime - TICK_MS),
 				);
 				break;
 			case "ArrowRight":
 				event.preventDefault();
-				AnimationService.seek(
+				timelineService.seek(
 					Math.min(
-						animation.duration,
-						timeline.currentTime + TICK_MS,
+						animationState.duration,
+						timelineState.currentTime + TICK_MS,
 					),
 				);
 				break;
 			case "Home":
 				event.preventDefault();
-				AnimationService.seek(0);
+				timelineService.seek(0);
 				break;
 			case "End":
 				event.preventDefault();
-				AnimationService.seek(animation.duration);
+				timelineService.seek(animationState.duration);
 				break;
 			case " ":
 			case "Enter":
 				event.preventDefault();
-				AnimationService.togglePlayPause();
+				timelineService.togglePlayPause();
 				break;
 		}
 	}
@@ -92,7 +91,7 @@
 
 	function exportCode() {
 		// Create a safe filename from the title
-		const safeFilename = animation.title
+		const safeFilename = animationState.title
 			.replace(/[^a-z0-9]/gi, "-")
 			.toLowerCase()
 			.replace(/-+/g, "-")
@@ -101,7 +100,9 @@
 		const filename = `${safeFilename || "animation"}.js`;
 
 		// Create a Blob with the code content
-		const blob = new Blob([animation.code], { type: "text/javascript" });
+		const blob = new Blob([animationState.code], {
+			type: "text/javascript",
+		});
 
 		// Create a temporary download link
 		const url = URL.createObjectURL(blob);
@@ -130,11 +131,11 @@
 			tabindex="0"
 			aria-label="Timeline scrubber"
 			aria-valuemin="0"
-			aria-valuemax={animation.duration}
-			aria-valuenow={timeline.currentTime}
-			aria-valuetext="{formatTime(timeline.currentTime)} of {formatTime(
-				animation.duration,
-			)}"
+			aria-valuemax={animationState.duration}
+			aria-valuenow={timelineState.currentTime}
+			aria-valuetext="{formatTime(
+				timelineState.currentTime,
+			)} of {formatTime(animationState.duration)}"
 			onmousedown={handleMouseDown}
 			onclick={handleTimelineClick}
 			onkeydown={handleKeyDown}
@@ -145,7 +146,8 @@
 					0,
 					Math.min(
 						100,
-						(timeline.currentTime / animation.duration) * 100,
+						(timelineState.currentTime / animationState.duration) *
+							100,
 					),
 				)}%"
 			></div>
@@ -158,7 +160,8 @@
 					0,
 					Math.min(
 						100,
-						(timeline.currentTime / animation.duration) * 100,
+						(timelineState.currentTime / animationState.duration) *
+							100,
 					),
 				)}%"
 			></div>
@@ -166,7 +169,7 @@
 
 		<div class="flex justify-between mt-1 text-xs text-foreground/50">
 			<span>0:00</span>
-			<span>{formatTime(animation.duration)}</span>
+			<span>{formatTime(animationState.duration)}</span>
 		</div>
 	</div>
 
@@ -176,11 +179,11 @@
 		<div class="flex items-center justify-between mb-3">
 			<div class="flex items-center gap-3">
 				<button
-					onclick={() => AnimationService.togglePlayPause()}
+					onclick={() => timelineService.togglePlayPause()}
 					class="text-sm border text-primary border-primary rounded-full px-2 py-2 hover:border-primary/90"
-					title={timeline.isPlaying ? "Pause" : "Play"}
+					title={timelineState.isPlaying ? "Pause" : "Play"}
 				>
-					{#if timeline.isPlaying}
+					{#if timelineState.isPlaying}
 						<svg
 							class="w-5 h-5"
 							fill="currentColor"

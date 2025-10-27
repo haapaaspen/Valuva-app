@@ -1,10 +1,17 @@
 /**
  * Render Service - Handles animation compilation, rendering, and frame caching
- * Manages canvas context and render loop
+ * Simple frame renderer - just renders frames on request
  */
 
-import { animation, timeToFrame, timeline, TICK_MS } from './animation-store.svelte';
+import type { AnimationService } from './animation-service';
 import type { CacheStats } from './types';
+
+const FPS = 60;
+const TICK_MS = 1000 / FPS;
+
+function timeToFrame(time_ms: number): number {
+	return Math.round(time_ms / TICK_MS);
+}
 
 type RenderFunction = (
 	ctx: CanvasRenderingContext2D,
@@ -19,8 +26,9 @@ export class RenderService {
 	private renderFn: RenderFunction | null = null;
 	private canvas: HTMLCanvasElement | null = null;
 	private ctx: CanvasRenderingContext2D | null = null;
-	private playbackRafId: number | null = null;
 	private readonly CACHE_SIZE = 10000;
+
+	constructor(private animationService: AnimationService) {}
 
 	/**
 	 * Set canvas and context (called from canvas component on mount)
@@ -56,6 +64,7 @@ export class RenderService {
 		}
 	}
 
+
 	/**
 	 * Render a specific frame at the given time
 	 */
@@ -78,13 +87,13 @@ export class RenderService {
 			this.renderFn(
 				this.ctx,
 				this.canvas,
-				animation.width,
-				animation.height,
+				this.animationService.width,
+				this.animationService.height,
 				time_ms,
 			);
 
 			// Cache the frame
-			const imageData = this.ctx.getImageData(0, 0, animation.width, animation.height);
+			const imageData = this.ctx.getImageData(0, 0, this.animationService.width, this.animationService.height);
 
 			if (this.frameCache.size < this.CACHE_SIZE) {
 				this.frameCache.set(frameKey, imageData);
@@ -122,10 +131,10 @@ export class RenderService {
 
 		// Render new frame
 		try {
-			this.renderFn(ctx, canvas, animation.width, animation.height, time_ms);
+			this.renderFn(ctx, canvas, this.animationService.width, this.animationService.height, time_ms);
 
 			// Cache the frame
-			const imageData = ctx.getImageData(0, 0, animation.width, animation.height);
+			const imageData = ctx.getImageData(0, 0, this.animationService.width, this.animationService.height);
 
 			if (this.frameCache.size < this.CACHE_SIZE) {
 				this.frameCache.set(frameKey, imageData);
@@ -135,41 +144,6 @@ export class RenderService {
 		} catch (error) {
 			console.error('[RenderService] Render error:', error);
 			return null;
-		}
-	}
-
-	/**
-	 * Start playback loop
-	 */
-	startPlayback(): void {
-		if (this.playbackRafId !== null) {
-			return; // Already playing
-		}
-
-		const tick = () => {
-			// Advance by one frame
-			timeline.currentTime += TICK_MS;
-
-			// Loop at end
-			if (timeline.currentTime >= animation.duration) {
-				timeline.currentTime = timeline.currentTime % animation.duration;
-			}
-
-			this.playbackRafId = requestAnimationFrame(tick);
-		};
-
-		this.playbackRafId = requestAnimationFrame(tick);
-		console.log('[RenderService] Playback started');
-	}
-
-	/**
-	 * Stop playback loop
-	 */
-	stopPlayback(): void {
-		if (this.playbackRafId !== null) {
-			cancelAnimationFrame(this.playbackRafId);
-			this.playbackRafId = null;
-			console.log('[RenderService] Playback stopped');
 		}
 	}
 
@@ -198,7 +172,4 @@ export class RenderService {
 		return this.renderFn !== null;
 	}
 }
-
-// Singleton instance
-export const renderService = new RenderService();
 

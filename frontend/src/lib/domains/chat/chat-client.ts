@@ -8,7 +8,7 @@ import type { UIMessage } from '@ai-sdk/svelte';
 import { untrack } from 'svelte';
 import { toast } from 'svelte-sonner';
 import { processMessageParts, findGraphicsResult } from './message-parser';
-import { AnimationService } from '../animation/animation-service';
+import { animationService, timelineService, renderService } from '../animation/instances';
 
 export class ChatClient extends Chat {
 	constructor() {
@@ -20,6 +20,9 @@ export class ChatClient extends Chat {
 				console.error('[ChatClient] Error:', error);
 				toast.error(error.message || 'Something went wrong');
 			},
+			onFinish: (message, options) => {
+				this.handleCompletedMessage(message);
+			},
 		});
 	}
 
@@ -30,19 +33,33 @@ export class ChatClient extends Chat {
 		return this.status === 'streaming' || this.status === 'submitted';
 	}
 
-	/**
-	 * Handle AI response and coordinate with other domains
-	 */
-	handleAIMessage(message: UIMessage): void {
-		const processedParts = processMessageParts(message);
-		const graphicsData = findGraphicsResult(processedParts);
 
-		if (graphicsData) {
-			AnimationService.loadFromAI({
-				code: graphicsData.code,
-				duration: graphicsData.duration,
-				title: graphicsData.title,
-			});
+	/**
+	 * Handle completed AI messages with tool results
+	 * @private
+	 */
+	private handleCompletedMessage(message: any): void {
+		try {
+			const processedParts = processMessageParts(message);
+			const graphicsData = findGraphicsResult(processedParts);
+
+			if (graphicsData) {
+				// Load animation via service instance
+				animationService.loadFromAI({
+					code: graphicsData.code,
+					duration: graphicsData.duration,
+					title: graphicsData.title,
+				});
+
+				// Reset timeline and compile
+				timelineService.stop();
+				renderService.compile(graphicsData.code);
+				
+				console.log('[ChatClient] Loaded animation:', graphicsData.title);
+			}
+		} catch (error) {
+			console.error('[ChatClient] Error processing AI message:', error);
+			toast.error('Failed to process animation');
 		}
 	}
 }
