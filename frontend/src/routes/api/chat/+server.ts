@@ -4,9 +4,10 @@
  */
 
 import { ChatHandler } from '$lib/server/ai/chat-handler';
+import type { UIMessage } from 'ai';
 
 export async function POST({ request, cookies }) {
-	const { messages } = await request.json();
+	const { messages }: { messages: UIMessage[] } = await request.json();
 	const selectedChatModel = cookies.get('selected-model') || 'chat-model';
 
 	return ChatHandler.handleRequest(messages, selectedChatModel);

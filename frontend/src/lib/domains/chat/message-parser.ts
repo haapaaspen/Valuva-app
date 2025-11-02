@@ -4,6 +4,7 @@
  */
 
 import type { UIMessage } from '@ai-sdk/svelte';
+import { isToolUIPart, getToolName } from 'ai';
 import type { ProcessedPart, GraphicsResult } from './types';
 
 /**
@@ -23,24 +24,25 @@ export function processMessageParts(message: UIMessage): ProcessedPart[] {
 				};
 			}
 
-			// Handle tool invocations
-			if (part.type === 'tool-invocation') {
-				const toolInvocation = (part as any).toolInvocation;
-				const { toolName, state, result } = toolInvocation;
+			// Handle tool invocations (v5 uses typed parts)
+			if (isToolUIPart(part)) {
+				const toolName = getToolName(part);
+				const state = part.state;
 
-				// Compute display properties
-				const icon = state === 'call' ? '🛠️' : '✅';
-				const action = state === 'call' ? 'Using tool' : 'completed';
+				// Map v5 states to our internal states
+				const mappedState = state === 'output-available' ? 'result' : 'call';
+				const icon = mappedState === 'call' ? '🛠️' : '✅';
+				const action = mappedState === 'call' ? 'Using tool' : 'completed';
 				const displayText = `${action}: ${toolName}`;
 
 				return {
 					type: 'tool' as const,
 					key: `${message.id}-${index}`,
 					toolName,
-					state,
+					state: mappedState,
 					displayText,
 					icon,
-					result,
+					result: state === 'output-available' ? part.output : undefined,
 				};
 			}
 

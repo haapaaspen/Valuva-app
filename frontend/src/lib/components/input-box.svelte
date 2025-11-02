@@ -9,6 +9,7 @@
 		chatClient: Chat;
 	} = $props();
 
+	let input = $state<string>("");
 	let mounted = $state(false);
 	let textareaRef = $state<HTMLTextAreaElement | null>(null);
 	const loading = $derived(
@@ -29,17 +30,13 @@
 		}
 	};
 
-	function setInput(value: string) {
-		chatClient.input = value;
-		adjustHeight();
-	}
-
 	async function submitForm(event?: Event) {
 		event?.preventDefault();
 
-		if (!chatClient.input.trim() || loading) return;
+		if (!input.trim() || loading) return;
 
-		await chatClient.handleSubmit(event);
+		await chatClient.sendMessage({ text: input });
+		input = "";
 		resetHeight();
 		textareaRef?.focus();
 	}
@@ -53,7 +50,7 @@
 <form class="flex w-full gap-2" onsubmit={submitForm}>
 	<textarea
 		bind:this={textareaRef}
-		bind:value={chatClient.input}
+		bind:value={input}
 		oninput={adjustHeight}
 		placeholder="Describe the motion graphics you want to create..."
 		class="flex-1 resize-none rounded-lg border border-border p-3 bg-accent text-foreground placeholder:text-foreground/50 focus:outline-none"
@@ -68,7 +65,7 @@
 
 	<button
 		type="submit"
-		disabled={loading || !chatClient.input.trim()}
+		disabled={loading || !input.trim()}
 		class="text-sm border border-primary rounded-md px-4 py-2 hover:border-primary/90 disabled:border-primary/40 disabled:text-foreground/60 disabled:cursor-not-allowed"
 	>
 		{#if loading}

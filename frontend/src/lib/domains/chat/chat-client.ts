@@ -14,13 +14,12 @@ export class ChatClient extends Chat {
 	constructor() {
 		super({
 			id: crypto.randomUUID(),
-			sendExtraMessageFields: true,
 			generateId: crypto.randomUUID.bind(crypto),
 			onError: (error: Error) => {
 				console.error('[ChatClient] Error:', error);
 				toast.error(error.message || 'Something went wrong');
 			},
-			onFinish: (message, options) => {
+			onFinish: ({ message }) => {
 				this.handleCompletedMessage(message);
 			},
 		});
