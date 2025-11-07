@@ -1,6 +1,8 @@
 # Valuva AI
 
-This is a minimal implementation of the Valuva AI chatbot with canvas graphics rendering capabilities.
+This is the working implementation of the Valuva AI chatbot with motion graphic creation. 
+
+To try it out, you need to add your ANTHROPIC_API_KEY to .env inside the folder /frontend
 
 ## Demo
 
